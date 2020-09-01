@@ -1,6 +1,5 @@
 package net.bitnine.agens.spark
 
-import net.bitnine.agens.spark.AgensConfig
 import net.bitnine.agens.spark.elastic.AgensJavaElastic
 
 import org.apache.spark.sql.types.{DataType, StructField, StructType}

@@ -130,7 +130,9 @@
       <groupId>net.bitnine.agens</groupId>
       <artifactId>spark-cypher</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
+<!--      <scope>provided</scope>-->
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/agens-spark-cypher-${project.version}.jar</systemPath>
     </dependency>
 
     <!-- TEST -->
@@ -148,10 +150,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.0.0-M5</version>
         <configuration>
-          <includes>
-            <include>**/*Test.*</include>
-            <include>**/*IT.*</include>
-          </includes>
+          <skipTests>true</skipTests>
           <trimStackTrace>false</trimStackTrace>
         </configuration>
       </plugin>

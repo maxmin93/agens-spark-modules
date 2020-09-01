@@ -1,7 +1,5 @@
 package net.bitnine.agens.spark
 
-import net.bitnine.agens.spark.AgensMeta
-
 import org.apache.spark.sql.{DataFrame, Encoders, Row, SparkSession}
 import org.apache.spark.sql.functions.{col, explode, lit}
 import org.apache.spark.sql.types.{DataType, StructField, StructType}

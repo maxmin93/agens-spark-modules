@@ -1,8 +1,6 @@
 package net.bitnine.agens.spark
 
 import net.bitnine.agens.spark.Agens.{schemaE, schemaV}
-import net.bitnine.agens.spark.AgensMeta
-import net.bitnine.agens.cypher.api.CAPSSession
 
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
