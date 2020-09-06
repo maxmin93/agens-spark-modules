@@ -1,109 +1,121 @@
 package net.bitnine.agens.hive;
 
+import static org.apache.avro.file.DataFileConstants.DEFLATE_CODEC;
+import static org.apache.avro.mapred.AvroJob.OUTPUT_CODEC;
+import static org.apache.avro.mapred.AvroOutputFormat.DEFLATE_LEVEL_KEY;
+
+import java.io.IOException;
+import java.util.Properties;
+
+import org.apache.avro.Schema;
+import org.apache.avro.file.CodecFactory;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.hive.ql.exec.FileSinkOperator;
+import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
+import org.apache.hadoop.hive.ql.io.avro.AvroGenericRecordWriter;
+import org.apache.hadoop.hive.serde2.avro.AvroGenericRecordWritable;
+import org.apache.hadoop.hive.serde2.avro.AvroSerdeException;
+import org.apache.hadoop.hive.serde2.avro.AvroSerdeUtils;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapred.FileSplit;
-import org.apache.hadoop.mapred.InputSplit;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reporter;
-import org.elasticsearch.hadoop.cfg.HadoopSettingsManager;
-import org.elasticsearch.hadoop.cfg.InternalConfigurationOptions;
-import org.elasticsearch.hadoop.cfg.Settings;
-import org.elasticsearch.hadoop.hive.HiveValueReader;
-import org.elasticsearch.hadoop.mr.EsInputFormat;
-import org.elasticsearch.hadoop.mr.security.HadoopUserProvider;
-import org.elasticsearch.hadoop.rest.InitializationUtils;
-import org.elasticsearch.hadoop.util.StringUtils;
+import org.apache.hadoop.util.Progressable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+public class AgensHiveInputFormat implements HiveOutputFormat<WritableComparable, AvroGenericRecordWritable> {
 
-import static net.bitnine.agens.hive.HiveConstants.TABLE_LOCATION;
+    public static final Log LOG = LogFactory.getLog(AgensHiveInputFormat.class);
 
+    @Override
+    public org.apache.hadoop.hive.ql.exec.FileSinkOperator.RecordWriter getHiveRecordWriter(
+            JobConf jobConf,
+            Path path, Class<? extends Writable> valueClass, boolean isCompressed,
+            Properties properties, Progressable progressable
+    ) throws IOException {
 
-public class AgensHiveInputFormat extends EsInputFormat<Text, Writable> {
+        Schema schema;
+        try {
+            schema = AvroSerdeUtils.determineSchemaOrThrowException(jobConf, properties);
+        } catch (AvroSerdeException e) {
+            throw new IOException(e);
+        }
+        GenericDatumWriter<GenericRecord> gdw = new GenericDatumWriter<GenericRecord>(schema);
+        DataFileWriter<GenericRecord> dfw = new DataFileWriter<GenericRecord>(gdw);
 
-    static class EsHiveSplit extends FileSplit {
-        InputSplit delegate;
-        private Path path;
+        dfw.create(schema, path.getFileSystem(jobConf).create(path));
+        return new AvroGenericRecordWriter(dfw);
+    }
 
-        EsHiveSplit() {
-            this(new EsInputSplit(), null);
+    class WrapperRecordWriter<K extends Writable, V extends Writable> implements RecordWriter<K, V> {
+        FileSinkOperator.RecordWriter hiveWriter = null;
+        JobConf jobConf;
+        Progressable progressable;
+        String fileName;
+
+        public WrapperRecordWriter(JobConf jobConf, Progressable progressable, String fileName) {
+            this.progressable = progressable;
+            this.jobConf = jobConf;
+            this.fileName = fileName;
         }
 
-        EsHiveSplit(InputSplit delegate, Path path) {
-            super(path, 0, 0, (String[]) null);
-            this.delegate = delegate;
-            this.path = path;
-        }
+        private FileSinkOperator.RecordWriter getHiveWriter() throws IOException {
+            if (this.hiveWriter == null) {
+                Properties properties = new Properties();
+                for (AvroSerdeUtils.AvroTableProperties tableProperty : AvroSerdeUtils.AvroTableProperties.values()) {
+                    String propVal;
+                    if ((propVal = jobConf.get(tableProperty.getPropName())) != null) {
+                        properties.put(tableProperty.getPropName(), propVal);
+                    }
+                }
 
-        public long getLength() {
-            // TODO: can this be delegated?
-            return 1L;
-        }
+                Boolean isCompressed = jobConf.getBoolean("mapreduce.output.fileoutputformat.compress", false);
+                Path path = new Path(this.fileName);
+                if (path.getFileSystem(jobConf).isDirectory(path)) {
+                    // This path is only potentially encountered during setup
+                    // Otherwise, a specific part_xxxx file name is generated and passed in.
+                    path = new Path(path, "_dummy");
+                }
 
-        public String[] getLocations() throws IOException {
-            return delegate.getLocations();
-        }
-
-        public void write(DataOutput out) throws IOException {
-            Text.writeString(out, path.toString());
-            delegate.write(out);
-        }
-
-        public void readFields(DataInput in) throws IOException {
-            path = new Path(Text.readString(in));
-            delegate.readFields(in);
+                this.hiveWriter = getHiveRecordWriter(jobConf, path, null, isCompressed, properties, progressable);
+            }
+            return this.hiveWriter;
         }
 
         @Override
-        public String toString() {
-            return delegate.toString();
+        public void write(K key, V value) throws IOException {
+            getHiveWriter().write(value);
         }
 
         @Override
-        public Path getPath() {
-            return path;
+        public void close(Reporter reporter) throws IOException {
+            // Normally, I'd worry about the blanket false being passed in here, and that
+            // it'd need to be integrated into an abort call for an OutputCommitter, but the
+            // underlying recordwriter ignores it and throws it away, so it's irrelevant.
+            getHiveWriter().close(false);
         }
+
+    }
+
+    //no records will be emitted from Hive
+    @Override
+    public RecordWriter<WritableComparable, AvroGenericRecordWritable>
+    getRecordWriter(FileSystem ignored, JobConf job, String fileName,
+                    Progressable progress) throws IOException {
+        return new WrapperRecordWriter<WritableComparable, AvroGenericRecordWritable>(job, progress, fileName);
     }
 
     @Override
-    public FileSplit[] getSplits(JobConf job, int numSplits) throws IOException {
-        // first, merge input table properties (since there's no access to them ...)
-        Settings settings = HadoopSettingsManager.loadFrom(job);
-        //settings.merge(IOUtils.propsFromString(settings.getProperty(HiveConstants.INPUT_TBL_PROPERTIES)));
-
-        Log log = LogFactory.getLog(getClass());
-
-        // move on to initialization
-        InitializationUtils.setValueReaderIfNotSet(settings, HiveValueReader.class, log);
-        InitializationUtils.setUserProviderIfNotSet(settings, HadoopUserProvider.class, log);
-        if (settings.getOutputAsJson() == false) {
-            // Only set the fields if we aren't asking for raw JSON
-            settings.setProperty(InternalConfigurationOptions.INTERNAL_ES_TARGET_FIELDS, StringUtils.concatenate(HiveUtils.columnToAlias(settings), ","));
-        }
-
-        HiveUtils.init(settings, log);
-
-        // decorate original splits as FileSplit
-        InputSplit[] shardSplits = super.getSplits(job, numSplits);
-        FileSplit[] wrappers = new FileSplit[shardSplits.length];
-        Path path = new Path(job.get(TABLE_LOCATION));
-        for (int i = 0; i < wrappers.length; i++) {
-            wrappers[i] = new EsHiveSplit(shardSplits[i], path);
-        }
-        return wrappers;
-    }
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    @Override
-    public AbstractWritableEsInputRecordReader getRecordReader(InputSplit split, JobConf job, Reporter reporter) {
-        InputSplit delegate = ((EsHiveSplit) split).delegate;
-        return isOutputAsJson(job) ? new JsonWritableEsInputRecordReader(delegate, job, reporter) : new WritableEsInputRecordReader(delegate, job, reporter);
+    public void checkOutputSpecs(FileSystem ignored, JobConf job) throws IOException {
+        return; // Not doing any check
     }
 
 }

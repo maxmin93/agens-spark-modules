@@ -28,11 +28,12 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <scala.version>2.11.12</scala.version>
     <scala.binary.version>2.11</scala.binary.version>
-    <morpheus.version>0.2.7</morpheus.version>
     <elasticsearch.version>7.7.1</elasticsearch.version>
-    <hive.version>1.2.1.spark2</hive.version>
     <spark.version>2.4.6</spark.version>
     <xbean.version>4.10</xbean.version>
+    <morpheus.version>0.2.7</morpheus.version>
+    <hive.version>1.2.1.spark2</hive.version>
+    <livy.version>0.7.0-incubating</livy.version>
     <graphframes.version>0.8.0-spark2.4-s_2.11</graphframes.version>
   </properties>
 
@@ -40,6 +41,21 @@
     <module>spark-cypher</module>
     <module>spark-connector</module>
     <module>hive-storage-handler</module>
+    <module>livy-jobs</module>
+    <module>livy-test</module>
   </modules>
 
-</project>
+</project><!--
+** module: livy-jobs
+
+mvn archetype:generate -B \
+    -DarchetypeGroupId=net.alchim31.maven -DarchetypeArtifactId=scala-archetype-simple -DarchetypeVersion=1.7 \
+    -DgroupId=net.bitnine.agens -DartifactId=livy-jobs -Dversion=1.0-dev -Dpackage=net.bitnine.agens.livy
+
+** module: livy-test
+
+mvn archetype:generate -B \
+    -DarchetypeGroupId=org.apache.maven.archetypes -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 \
+    -DgroupId=net.bitnine.agens -DartifactId=livy-test -Dversion=1.0-dev -Dpackage=net.bitnine.agens.livy-test
+
+-->

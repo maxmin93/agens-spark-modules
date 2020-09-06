@@ -13,7 +13,7 @@
   <packaging>jar</packaging>
 
   <name>hive-storage-handler</name>
-  <description>Agens Hive Storage Handler Using Elasticsearch</description>
+  <description>Agens Hive Storage Handler Using Avro</description>
 
   <organization>
     <name>Bitnine</name>
@@ -27,66 +27,65 @@
     </developer>
   </developers>
 
-  <!-- properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties -->
+  <properties>
+    <hadoop.version>2.10.0</hadoop.version>
+    <hive.version>2.3.7</hive.version>
+    <avro.version>1.7.7</avro.version>
+  </properties>
 
   <dependencies>
-
-    <!--
-    ERROR StatusLogger Log4j2 could not find a logging implementation.
-    Please add log4j-core to the classpath. Using SimpleLogger to log to the console...
-    -->
+    <!-- Scala -->
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-to-slf4j</artifactId>
-      <version>2.11.2</version>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.version}</version>
     </dependency>
 
-    <!-- ElasticSearch Spark Library (not included)-->
+    <!-- Hadoop -->
     <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch-spark-20_${scala.binary.version}</artifactId>
-      <version>${elasticsearch.version}</version>
-      <scope>provided</scope>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>${hadoop.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch-hadoop-hive</artifactId>
-      <version>${elasticsearch.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- elasticsearch -->
-    <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch-core</artifactId>
-      <version>${elasticsearch.version}</version>
-    </dependency>
-    <dependency>
-      <groupId> org.elasticsearch.client</groupId>
-      <artifactId>elasticsearch-rest-high-level-client</artifactId>
-      <version>${elasticsearch.version}</version>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-common</artifactId>
+      <version>${hadoop.version}</version>
+      <scope>compile</scope>
     </dependency>
 
-    <!-- for Hive Storage Handler -->
+    <!-- Hive -->
     <dependency>
-      <groupId>org.spark-project.hive</groupId>
+      <groupId>org.apache.hive</groupId>
       <artifactId>hive-exec</artifactId>
       <version>${hive.version}</version>
       <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.json4s</groupId>
-          <artifactId>json4s-jackson_2.10</artifactId>
-        </exclusion>
-      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-common</artifactId>
+      <version>${hive.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Spark -->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_${scala.binary.version}</artifactId>
+      <version>${spark.version}</version>
+    </dependency>
+
+    <!-- Livy : remote spark job by REST API-->
+    <dependency>
+      <groupId>org.apache.livy</groupId>
+      <artifactId>livy-api</artifactId>
+      <version>${livy.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.livy</groupId>
+      <artifactId>livy-client-http</artifactId>
+      <version>${livy.version}</version>
     </dependency>
 
     <!-- TEST -->
@@ -108,7 +107,7 @@
           <trimStackTrace>false</trimStackTrace>
         </configuration>
       </plugin>
-      <!-- plugin>
+      <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
         <version>4.3.1</version>
@@ -143,7 +142,7 @@
             <jvmArg>-Xmx1024m</jvmArg>
           </jvmArgs>
         </configuration>
-      </plugin -->
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -151,7 +150,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>net.bitnine.agens.hive.AgensStorageHandler</mainClass>
+              <mainClass>net.bitnine.agens.hive.AgensHiveStorageHandler</mainClass>
               <addClasspath>true</addClasspath>
             </manifest>
           </archive>
@@ -172,7 +171,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>net.bitnine.agens.hive.AgensStorageHandler</mainClass>
+              <mainClass>net.bitnine.agens.hive.AgensHiveStorageHandler</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
@@ -181,6 +180,31 @@
           <appendAssemblyId>false</appendAssemblyId>
           <finalName>agens-${project.artifactId}-${project.version}</finalName>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>upload full-jar to hdfs</id>
+            <phase>pre-integration-test</phase>
+            <configuration>
+              <target>
+                <exec executable="hdfs">
+                  <arg value="dfs" />
+                  <arg value="-put" />
+                  <arg value="-f" />
+                  <arg value="target/agens-${project.artifactId}-${project.version}.jar" />
+                  <arg value="/user/agens/lib" />
+                </exec>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
