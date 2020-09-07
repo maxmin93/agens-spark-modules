@@ -133,8 +133,8 @@
       <artifactId>spark-cypher</artifactId>
       <version>${project.version}</version>
 <!--      <scope>provided</scope>-->
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/agens-spark-cypher-${project.version}.jar</systemPath>
+<!--      <scope>system</scope>-->
+<!--      <systemPath>${project.basedir}/lib/agens-spark-cypher-${project.version}.jar</systemPath>-->
     </dependency>
 
     <!-- TEST -->

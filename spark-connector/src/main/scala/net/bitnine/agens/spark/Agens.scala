@@ -320,3 +320,12 @@ class Agens(sc: SparkContext = null) extends Serializable {
 	}
 
 }
+
+/*
+val spark = SparkSession.builder().master("local").getOrCreate()
+
+// Do all your operations and save it on your Dataframe say (dataFrame)
+dataframe.write.avro("/tmp/output")
+dataframe.write.format("avro").save(outputPath)
+dataframe.write.format("avro").saveAsTable(hivedb.hivetable_avro)
+ */

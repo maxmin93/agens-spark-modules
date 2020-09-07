@@ -55,13 +55,16 @@ public final class AgensJavaElastic {
                     httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
         }
 
-        RestHighLevelClient client = new RestHighLevelClient(builder);
-        return client;
+        return new RestHighLevelClient(builder);
     }
 
     private void close(){
         if( client != null ){
-            try { client.close(); } catch(Exception e){ }
+            try {
+                client.close();
+            } catch(Exception e){
+                // An empty catch block
+            }
             client = null;
         }
     }
@@ -89,11 +92,11 @@ public final class AgensJavaElastic {
             // response
             Aggregations aggregations = searchResponse.getAggregations();
             Terms labels = aggregations.get("datasources");
-            labels.getBuckets().forEach(b -> {
-                result.put(b.getKeyAsString(), b.getDocCount());
-            });
+            labels.getBuckets().forEach(b -> result.put(b.getKeyAsString(), b.getDocCount()));
         }
-        catch (Exception ex) { }
+        catch (Exception ex) {
+            // An empty catch block
+        }
         finally { close(); }
 
         return result;
@@ -123,11 +126,13 @@ public final class AgensJavaElastic {
             // response
             Aggregations aggregations = searchResponse.getAggregations();
             Terms labels = aggregations.get("labels");
-            labels.getBuckets().forEach(b -> {
+            for (Terms.Bucket b : labels.getBuckets()) {
                 result.put(b.getKeyAsString(), b.getDocCount());
-            });
+            }
         }
-        catch (Exception ex){ }
+        catch (Exception ex){
+            // An empty catch block
+        }
         finally { close(); }
 
         return result;
@@ -163,11 +168,11 @@ public final class AgensJavaElastic {
             Aggregations aggregations = searchResponse.getAggregations();
             Nested agg = aggregations.get("propAgg");
             Terms keys = agg.getAggregations().get("keyAgg");
-            keys.getBuckets().forEach(b -> {
-                result.put(b.getKeyAsString(), b.getDocCount());
-            });
+            keys.getBuckets().forEach(b -> result.put(b.getKeyAsString(), b.getDocCount()));
         }
-        catch (Exception ex){ }
+        catch (Exception ex){
+            // An empty catch block
+        }
         finally { close(); }
 
         return result;
@@ -210,16 +215,18 @@ public final class AgensJavaElastic {
             keyAgg.getBuckets().forEach(b -> {
                 // keys : doc count
                 String keyValue = b.getKeyAsString();
-                Long docCount = b.getDocCount();
+                long docCount = b.getDocCount();
 
                 // keys' Meta : type, count by agg, hasNull
                 Terms typeAgg = b.getAggregations().get("typeAgg");
                 String typeValue = typeAgg.getBuckets().get(0).getKeyAsString();
-                Long aggCount = typeAgg.getBuckets().get(0).getDocCount();
-                result.put(keyValue, new Tuple3(typeValue, aggCount, docCount != aggCount));
+                long aggCount = typeAgg.getBuckets().get(0).getDocCount();
+                result.put(keyValue, new Tuple3<>(typeValue, aggCount, docCount != aggCount));
             });
         }
-        catch (Exception ex){ }
+        catch (Exception ex){
+            // An empty catch block
+        }
         finally { close(); }
 
         return result;

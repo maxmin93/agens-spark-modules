@@ -1,4 +1,4 @@
-package net.bitnine.agens.livytest;
+package net.bitnine.agens.livytest.java;
 
 import java.util.ArrayList;
 import java.util.List;
