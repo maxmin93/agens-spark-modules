@@ -25,10 +25,12 @@ public class LivyClientTest {
         try {
             client = new LivyClientBuilder()
                     .setURI(new URI(args[0]))
-                    .setConf("es.nodes","minmac")
-                    .setConf("es.port","29200")
-                    .setConf("es.nodes.wan.only","true")
                     .setConf(SparkLauncher.EXECUTOR_MEMORY, "1G")
+                    .setConf("livy.rsc.server.connect.timeout","10s")
+                    .setConf("agens.livy.host","minmac")
+                    .setConf("agens.livy.port","8998")
+                    .setConf("agens.es.vertex","agensvertex")
+                    .setConf("agens.es.edge","agensedge")
                     .build();
         }catch (Exception e){
             return;
@@ -44,11 +46,17 @@ public class LivyClientTest {
             System.err.printf("addJar '%s'\n", jarUri);
             client.addJar(new URI(jarUri)).get();       // like as addFile(URI), uploadJar(File)
 
-            int samples = Integer.parseInt(args[1]);
-            System.err.printf("Running PiJob with '%d' samples...\n", samples);
-            pi = client.submit(new net.bitnine.agens.hive.livy.PiJob(samples)).get();
+//            int samples = Integer.parseInt(args[1]);
+//            System.err.printf("Running PiJob with '%d' samples...\n", samples);
+//            pi = client.submit(new net.bitnine.agens.hive.livy.PiJob(samples)).get();
+//            System.out.println("Pi is roughly: " + pi);
 
-            System.out.println("Pi is roughly: " + pi);
+//            Long size = client.submit(new net.bitnine.agens.hive.livy.AvroWriteJob()).get();
+//            System.out.printf("Df.size = %d\n", size);
+
+            String json = client.submit(new net.bitnine.agens.hive.livy.AvroWriteJob()).get();
+            System.out.println("schema ==>\n"+json);
+
         }catch (Exception e){
             System.out.println("LivyClient Exception: " + e.getMessage());
         }
@@ -61,6 +69,7 @@ public class LivyClientTest {
     // 왜 안되지? config 탓인가??
     public static boolean existsHdfsFile(String fileName){
         Configuration config = new Configuration();
+        config.set("fs.default.name", "hdfs://minmac:9000");
         try {
             FileSystem hdfs = FileSystem.get(config);
             Path path = new Path(fileName);
@@ -74,5 +83,6 @@ public class LivyClientTest {
 /*
 java -cp target/agens-hive-storage-handler-1.0-dev.jar net.bitnine.agens.hive.livy.LivyClientTest http://minmac:8998 5
 
+java -cp target/agens-hive-storage-handler-1.0-dev.jar net.bitnine.agens.hive.livy.LivyClientTest http://minmac:8998 5
 
  */

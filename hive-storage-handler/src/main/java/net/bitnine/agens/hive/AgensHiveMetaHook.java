@@ -58,6 +58,7 @@ public class AgensHiveMetaHook implements HiveMetaHook {
     public void rollbackCreateTable(Table table) throws MetaException {
         // Do nothing by default
         System.err.printf("rollbackCreateTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
+
     }
 
     @Override
@@ -65,8 +66,6 @@ public class AgensHiveMetaHook implements HiveMetaHook {
         // Do nothing by default
         System.err.printf("commitCreateTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
 
-        List<String> args = ImmutableList.of("http://minmac:8998", "3");
-        LivyClientTest.main(args.toArray(new String[args.size()]));
     }
 
     @Override
@@ -74,14 +73,13 @@ public class AgensHiveMetaHook implements HiveMetaHook {
         // Do nothing by default
         System.err.printf("preDropTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
 
-        List<String> args = ImmutableList.of("http://minmac:8998", "3");
-        LivyClientTest.main(args.toArray(new String[args.size()]));
     }
 
     @Override
     public void rollbackDropTable(Table table) throws MetaException {
         // Do nothing by default
         System.err.printf("rollbackDropTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
+
     }
 
     @Override
@@ -89,7 +87,5 @@ public class AgensHiveMetaHook implements HiveMetaHook {
         // Do nothing by default
         System.err.printf("commitDropTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
 
-        List<String> args = ImmutableList.of("http://minmac:8998", "4");
-        LivyClientTest.main(args.toArray(new String[args.size()]));
     }
 }
