@@ -1,4 +1,4 @@
 package net.bitnine.agens.livy;
 
-public class SaveAsAvro {
+public class ExecuteCypher {
 }

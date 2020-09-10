@@ -41,8 +41,12 @@
       <artifactId>spark-core_${scala.binary.version}</artifactId>
       <version>${spark.version}</version>
     </dependency>
-    <!-- jar download => https://repo1.maven.org/maven2/org/apache/spark/spark-avro_2.11/2.4.6/spark-avro_2.11-2.4.6.jar -->
-
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-avro_${scala.binary.version}</artifactId>
+      <version>${spark.version}</version>
+      <!-- jar download => https://repo1.maven.org/maven2/org/apache/spark/spark-avro_2.11/2.4.6/spark-avro_2.11-2.4.6.jar -->
+    </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql_${scala.binary.version}</artifactId>
@@ -51,15 +55,18 @@
     </dependency>
 
     <!-- Livy -->
-    <!-- dependency>
-      <groupId>org.apache.livy</groupId>
-      <artifactId>livy-api</artifactId>
-      <version>${livy.version}</version>
-    </dependency -->
     <dependency>
       <groupId>org.apache.livy</groupId>
       <artifactId>livy-client-http</artifactId>
       <version>${livy.version}</version>
+    </dependency>
+
+    <!-- agens-spark-connector with scala 2.11 -->
+    <dependency>
+      <groupId>net.bitnine.agens</groupId>
+      <artifactId>spark-connector</artifactId>
+      <version>${project.version}</version>
+      <!-- scope>provided</scope -->
     </dependency>
 
     <!-- Test -->
