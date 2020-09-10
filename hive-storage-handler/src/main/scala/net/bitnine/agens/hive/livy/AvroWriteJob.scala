@@ -1,5 +1,7 @@
 package net.bitnine.agens.hive.livy
 
+import net.bitnine.agens.spark.avro.SchemaConverters
+import org.apache.avro.SchemaBuilder
 import org.apache.livy.{Job, JobContext}
 import org.apache.spark.sql.{SaveMode, SparkSession}
 
@@ -27,7 +29,17 @@ class AvroWriteJob extends Job[java.lang.String] {
 				.format("avro")
 				.save("/user/agens/temp/person.avro")
 
-		df.schema.json
+		val dataSchema = df.schema
+		val options: Map[String, String] = Map("recordName"->"avro_person", "recordNamespace"->"net.bitnine.agens.hive")
+		val recordName = options.getOrElse("recordName", "topLevelRecord")
+		val recordNamespace = options.getOrElse("recordNamespace", "")
+		val build = SchemaBuilder.record(recordName).namespace(recordNamespace)
+		val outputAvroSchema = SchemaConverters.convertStructToAvro(dataSchema, build, recordNamespace)
+		System.err.println(outputAvroSchema.toString(true))
+
+		// outputAvroSchema.getFields.asScala.map(_.schema().toString).mkString("[", "],\n[", "]")
+		// outputAvroSchema.getFields
+		outputAvroSchema.toString
 	}
 
 }
@@ -60,44 +72,91 @@ add jar hdfs://minmac:9000/user/agens/lib/agens-hive-storage-handler-1.0-dev.jar
 
 list jars;
 
-CREATE external TABLE agens_test2(
-breed STRING,
-sex STRING
+CREATE external TABLE agens_test1 (
+firstname string,
+middlename string,
+lastname string,
+dob_year int,
+dob_month int,
+gender string,
+salary int
+)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+STORED AS
+INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+LOCATION '/user/agens/temp/person.avro'
+TBLPROPERTIES ('COLUMN_STATS_ACCURATE'='false');
+
+create external table agens_test2 (
+firstname string,
+middlename string,
+lastname string,
+dob_year int,
+dob_month int,
+gender string,
+salary int
 ) STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
 TBLPROPERTIES(
-'agens.conf.livy'='http://minmac:8998',
-'agens.conf.jar'='agens-hive-storage-handler-1.0-dev.jar',
+'agens.graph.livy'='http://minmac:8998',
+'agens.graph.datasource'='modern',
+'agens.graph.query.name'='cypher_test',
+'agens.graph.query.cypher'='match (a)-[:KNOWS]-(b) return a, b'
+);
+
+-- Columns 들은 정상적으로 파싱되어 들어 왔는데, Spark 작업중 자꾸 에러남
+create external table agens_test3
+STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
+TBLPROPERTIES(
+'agens.graph.livy'='http://minmac:8998',
+'agens.graph.datasource'='modern',
+'agens.graph.name'='cypher_test',
+'agens.query.cypher'='match (a)-[:KNOWS]-(b) return a, b',
+'avro.schema.literal'='{"type":"record","name":"avro_person","namespace":"net.bitnine.agens.hive","fields":[{"name":"firstname","type":["string","null"]},{"name":"middlename","type":["string","null"]},{"name":"lastname","type":["string","null"]},{"name":"dob_year","type":"int"},{"name":"dob_month","type":"int"},{"name":"gender","type":["string","null"]},{"name":"salary","type":"int"}]}'
+);
+
+-- **NOTE: 컬럼 설정을 안할 경우 MetaHook 들어가기도 전에 DDLTask 단계에서 실패
+-- ==> 1) 컬럼을 정의하거나, 2) avro.schema 의 fields 를 정의해야 함
+
+create external table agens_test4
+STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
+TBLPROPERTIES(
+'avro.schema.url'='/user/agens/default.avsc',
+'agens.graph.livy'='http://minmac:8998',
+'agens.graph.datasource'='modern',
+'agens.graph.name'='cypher_test',
+'agens.graph.query'='match (a)-[:KNOWS]-(b) return a, b'
+);
+
+-- dummy column 을 넣을까? 반드시 들어갈 내용이 있나?
+create external table agens_test5 (id string)
+STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
+TBLPROPERTIES(
+'agens.graph.livy'='http://minmac:8998',
 'agens.graph.datasource'='modern',
 'agens.graph.query'='match (a)-[:KNOWS]-(b) return a, b'
 );
 
-CREATE TABLE agens_test1(
-  breed STRING,
-  sex STRING
-) STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
-TBLPROPERTIES(
-  'agens.conf.livy'='http://minmac:8998',
-  'agens.conf.jar'='agens-hive-storage-handler-1.0-dev.jar',
-  'agens.graph.datasource'='modern',
-  'agens.graph.query'='match (a)-[:KNOWS]-(b) return a, b'
-);
+Properties ==>
+//////////////////////////////////////////////////////
 
-CREATE external TABLE agens_test2 (
-  `fileld1` string COMMENT '',
-  `field2` string COMMENT '',
-  `field3` string COMMENT '')
-ROW FORMAT SERDE
-  'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
-STORED AS INPUTFORMAT
-  'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
-OUTPUTFORMAT
-  'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
-LOCATION
-  '/user/agens/temp/person.avro'
-TBLPROPERTIES (
-  'COLUMN_STATS_ACCURATE'='false',
-  'avro.schema.url'='/data/gaurav/work/hive/old_db/SCHEMA/MyTable.avsc');
+columns=,
+columns.types=,
+columns.comments=,
 
+file.inputformat=org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat,
+file.outputformat=org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat,
+serialization.lib=org.apache.hadoop.hive.serde2.avro.AvroSerDe,
+storage_handler=net.bitnine.agens.hive.AgensHiveStorageHandler,
+
+name=default.agens_test4
+
+location=hdfs://minmac:9000/user/agens/temp/person.avro,
+avro.schema.literal={"type":"record","name":"avro_person","namespace":"net.bitnine.agens.hive","fields":[{"name":"firstname","type":["string","null"]},{"name":"middlename","type":["string","null"]},{"name":"lastname","type":["string","null"]},{"name":"dob_year","type":"int"},{"name":"dob_month","type":"int"},{"name":"gender","type":["string","null"]},{"name":"salary","type":"int"}]},
+
+agens.graph.livy=http://minmac:8998,
+agens.graph.datasource=modern,
+agens.graph.query=match (a)-[:KNOWS]-(b) return a, b,
 
 //////////////////////////////////////////////////////
 
@@ -125,77 +184,5 @@ Time taken: 1.608 seconds, Fetched: 5 row(s)
   ==> Error, return code 1 from org.apache.hadoop.hive.ql.exec.MoveTask
 INSERT OVERWRITE LOCAL DIRECTORY '/user/hive/warehouse/person_copy.avro'
 STORED AS AVRO SELECT * FROM avro_person;
-
-CREATE external TABLE avro_person_copy
-ROW FORMAT
-SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
-STORED AS
-INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
-OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
-LOCATION '/user/agens/temp/person.avro'
-TBLPROPERTIES ('avro.schema.literal'='{
-"namespace": "net.bitnine.agens.hive",
-"name": "doctors",
-"type": "record",
-"fields": [
-{"name":"firstname","type":"string"},
-{"name":"middlename","type":["string","null"]},
-{"name":"lastname","type":"string","nullable":true},
-{"name":"dob_year","type":"int","default":2020},
-{"name":"dob_month","type":"int","default":1},
-{"name":"gender","type":"string","default":"M"},
-{"name":"salary","type":"int"}
-]}');
-
-
-==================================
-Detailed Table Information	Table(
-==================================
-tableName:avro_person,
-dbName:default,
-owner:bgmin,
-createTime:1599481881,
-lastAccessTime:0,
-retention:0,
-sd:StorageDescriptor(
-	cols:[
-		FieldSchema(name:firstname, type:string, comment:null),
-		FieldSchema(name:middlename, type:string, comment:null),
-		FieldSchema(name:lastname, type:string, comment:null),
-		FieldSchema(name:dob_year, type:int, comment:null),
-		FieldSchema(name:dob_month, type:int, comment:null),
-		FieldSchema(name:gender, type:string, comment:null),
-		FieldSchema(name:salary, type:int, comment:null)
-	],
-	location:hdfs://minmac:9000/user/agens/temp/person.avro,
-	inputFormat:org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat,
-	outputFormat:org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat,
-	compressed:false,
-	numBuckets:-1,
-	serdeInfo:SerDeInfo(
-		name:null,
-		serializationLib:org.apache.hadoop.hive.serde2.avro.AvroSerDe,
-		parameters:{serialization.format=1}
-	),
-	bucketCols:[],
-	sortCols:[],
-	parameters:{},
-	skewedInfo:SkewedInfo(
-		skewedColNames:[], skewedColValues:[], skewedColValueLocationMaps:{}
-	),
-	storedAsSubDirectories:false
-),
-partitionKeys:[],
-parameters:{
-	transient_lastDdlTime=1599481881,
-	totalSize=1015,
-	EXTERNAL=TRUE,
-	numFiles=2
-},
-viewOriginalText:null,
-viewExpandedText:null,
-tableType:EXTERNAL_TABLE,
-rewriteEnabled:false
-)
 
  */

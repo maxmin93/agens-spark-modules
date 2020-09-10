@@ -66,6 +66,45 @@ public class LivyClientTest {
         // return pi;
     }
 
+    public static String getAvroSchema(){
+
+        String livyUrl = "http://minmac:8998";
+        String json = null;
+        LivyClient client;
+
+        try {
+            client = new LivyClientBuilder()
+                    .setURI(new URI(livyUrl))
+                    .setConf(SparkLauncher.EXECUTOR_MEMORY, "2G")
+                    .setConf("livy.rsc.server.connect.timeout","10s")
+                    .setConf("agens.es.host","minmac")
+                    .setConf("agens.es.port","29200")
+                    .setConf("agens.es.vertex","agensvertex")
+                    .setConf("agens.es.edge","agensedge")
+                    .build();
+        } catch (Exception e){
+            return null;
+        }
+
+        try {
+            String jarUri = "hdfs://minmac:9000/user/agens/lib/agens-hive-storage-handler-1.0-dev.jar";
+
+            System.err.printf("addJar '%s'\n", jarUri);
+            client.addJar(new URI(jarUri)).get();       // like as addFile(URI), uploadJar(File)
+
+            json = client.submit(new net.bitnine.agens.hive.livy.AvroWriteJob()).get();
+            System.err.println("schema ==>\n"+json);
+
+        }catch (Exception e){
+            System.out.println("LivyClient Exception: " + e.getMessage());
+        }
+        finally {
+            client.stop(true);
+        }
+
+        return json;
+    }
+
     // 왜 안되지? config 탓인가??
     public static boolean existsHdfsFile(String fileName){
         Configuration config = new Configuration();

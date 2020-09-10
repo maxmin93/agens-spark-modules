@@ -1,11 +1,20 @@
 package net.bitnine.agens.livytest.scala
 
+import net.bitnine.agens.livytest.avro.SchemaConverters
+import org.apache.avro.{Schema, SchemaBuilder}
+import org.apache.avro.SchemaBuilder.FieldAssembler
 import org.apache.livy.{Job, JobContext}
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{SaveMode, SparkSession}
 
-class AvroWriteJob extends Job[java.lang.String] {
+import scala.collection.JavaConverters._
 
-	override def call(jc: JobContext): java.lang.String = {
+class AvroWriteJob extends Job[Schema] {
+	override def call(jc: JobContext): Schema = {
+//class AvroWriteJob extends Job[java.util.List[Schema.Field]] {
+//	override def call(jc: JobContext): java.util.List[Schema.Field] = {
+//class AvroWriteJob extends Job[java.lang.String] {
+//	override def call(jc: JobContext): java.lang.String = {
 
 		val spark: SparkSession = jc.sparkSession()
 		import spark.sqlContext.implicits._
@@ -24,10 +33,39 @@ class AvroWriteJob extends Job[java.lang.String] {
 				.format("avro")
 				.save("/user/agens/temp/person.avro")
 
-		df.schema.json
+		val dataSchema = df.schema
+		val options: Map[String, String] = Map("recordName"->"avro_person", "recordNamespace"->"net.bitnine.agens.hive")
+		val recordName = options.getOrElse("recordName", "topLevelRecord")
+		val recordNamespace = options.getOrElse("recordNamespace", "")
+		val build = SchemaBuilder.record(recordName).namespace(recordNamespace)
+		val outputAvroSchema = SchemaConverters.convertStructToAvro(dataSchema, build, recordNamespace)
+//		outputAvroSchema.toString(true)
+
+		// outputAvroSchema.getFields.asScala.map(_.schema().toString).mkString("[", "],\n[", "]")
+		// outputAvroSchema.getFields
+		outputAvroSchema
 	}
 
 }
+
+/*
+java -cp target/agens-livy-test-1.0-dev.jar net.bitnine.agens.livytest.AvroWriteRun http://minmac:8998
+==>
+Uploading livy-example jar to the SparkContext...
+Avro Schema ==> {
+	"type":"record",
+	"name":"avro_person",
+	"namespace":"net.bitnine.agens.hive",
+	"fields":[
+		{"name":"firstname","type":["string","null"]},
+		{"name":"middlename","type":["string","null"]},
+		{"name":"lastname","type":["string","null"]},
+		{"name":"dob_year","type":"int"},
+		{"name":"dob_month","type":"int"},
+		{"name":"gender","type":["string","null"]},
+		{"name":"salary","type":"int"}
+	]}
+ */
 
 /*
 

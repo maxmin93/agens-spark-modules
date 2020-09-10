@@ -85,11 +85,11 @@
     </dependency>
 
     <!-- Livy : remote spark job by REST API-->
-    <dependency>
+    <!-- dependency>
       <groupId>org.apache.livy</groupId>
-      <artifactId>livy-client-http</artifactId>
+      <artifactId>livy-api</artifactId>
       <version>${livy.version}</version>
-    </dependency>
+    </dependency -->
 
     <!-- ElasticSearch Spark Library (not included)-->
     <dependency>

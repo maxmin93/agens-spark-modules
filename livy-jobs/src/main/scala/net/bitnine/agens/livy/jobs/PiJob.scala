@@ -1,4 +1,4 @@
-package net.bitnine.agens.livy.scala
+package net.bitnine.agens.livy.jobs
 
 import org.apache.livy.{Job, JobContext}
 

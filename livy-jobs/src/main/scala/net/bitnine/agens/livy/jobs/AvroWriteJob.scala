@@ -1,4 +1,4 @@
-package net.bitnine.agens.livy.scala
+package net.bitnine.agens.livy.jobs
 
 import org.apache.livy.{Job, JobContext}
 import org.apache.spark.sql.{DataFrame, Encoders, Row, SparkSession, functions}

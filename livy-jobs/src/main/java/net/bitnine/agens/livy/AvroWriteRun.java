@@ -33,7 +33,7 @@ public class AvroWriteRun {
                 }
             }
 
-            String json = client.submit(new net.bitnine.agens.livy.scala.AvroWriteJob()).get();
+            String json = client.submit(new net.bitnine.agens.livy.jobs.AvroWriteJob()).get();
 
             System.out.println("schema ==>\n"+json);
         } finally {

@@ -9,10 +9,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat;
+import org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat;
 
-import java.util.List;
+import java.util.*;
 
 public class AgensHiveMetaHook implements HiveMetaHook {
 
@@ -48,16 +52,35 @@ public class AgensHiveMetaHook implements HiveMetaHook {
             throw new MetaException("Cannot create table in BigQuery with Location property.");
         }
 */
-        System.err.printf("preCreateTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
+        // external table using avro
+        // location:hdfs://minmac:9000/user/agens/temp/person.avro,
+        // inputFormat:org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat,
+        // outputFormat:org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat,
+        StorageDescriptor sd = table.getSd();
 
-        List<String> args = ImmutableList.of("http://minmac:8998", "4");
-        LivyClientTest.main(args.toArray(new String[args.size()]));
+        System.err.printf("preCreateTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
+        System.err.println("==> "+table.getSd()+"\n");
+
+        List<FieldSchema> columns = new ArrayList<>();
+//        columns.add(new FieldSchema("id", "bigint", "Id column"));
+//        columns.add(new FieldSchema("name", "string", "Id column"));
+//        columns.add(new FieldSchema("skills", "array<string>",""));
+        sd.setCols(columns);
+
+        sd.setLocation("/user/agens/temp/person.avro");
+        sd.setInputFormat(AvroContainerInputFormat.class.getCanonicalName());
+        sd.setOutputFormat(AvroContainerOutputFormat.class.getCanonicalName());
+
+        String avroSchemaJson = LivyClientTest.getAvroSchema();
+        table.getParameters().put("avro.schema.literal", avroSchemaJson);
+        table.getParameters().remove("avro.schema.url");
     }
 
     @Override
     public void rollbackCreateTable(Table table) throws MetaException {
         // Do nothing by default
         System.err.printf("rollbackCreateTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
+        System.err.println("==> "+table.getSd()+"\n");
 
     }
 
@@ -65,6 +88,7 @@ public class AgensHiveMetaHook implements HiveMetaHook {
     public void commitCreateTable(Table table) throws MetaException {
         // Do nothing by default
         System.err.printf("commitCreateTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
+        System.err.println("==> "+table.getSd()+"\n");
 
     }
 
@@ -72,6 +96,7 @@ public class AgensHiveMetaHook implements HiveMetaHook {
     public void preDropTable(Table table) throws MetaException {
         // Do nothing by default
         System.err.printf("preDropTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
+        System.err.println("==> "+table.getSd()+"\n");
 
     }
 
@@ -79,6 +104,7 @@ public class AgensHiveMetaHook implements HiveMetaHook {
     public void rollbackDropTable(Table table) throws MetaException {
         // Do nothing by default
         System.err.printf("rollbackDropTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
+        System.err.println("==> "+table.getSd()+"\n");
 
     }
 
@@ -86,6 +112,7 @@ public class AgensHiveMetaHook implements HiveMetaHook {
     public void commitDropTable(Table table, boolean b) throws MetaException {
         // Do nothing by default
         System.err.printf("commitDropTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
+        System.err.println("==> "+table.getSd()+"\n");
 
     }
 }

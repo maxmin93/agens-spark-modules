@@ -34,7 +34,7 @@ public class PiApp {
             }
 
             final int slices = Integer.parseInt(args[1]);
-            double pi = client.submit(new net.bitnine.agens.livy.scala.PiJob(slices)).get();
+            double pi = client.submit(new net.bitnine.agens.livy.jobs.PiJob(slices)).get();
 
             System.out.println("Pi is roughly " + pi);
         } finally {

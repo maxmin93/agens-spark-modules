@@ -1,27 +1,26 @@
 package net.bitnine.agens.hive;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
-import org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat;
-import org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat;
-import org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe;
+import org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat;
+import org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat;
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
-import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
+import org.apache.hadoop.hive.serde2.avro.AvroSerDe;
 import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
 import org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorizationProvider;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputFormat;
-import org.apache.hadoop.mapred.SequenceFileInputFormat;
-import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 
 public class AgensHiveStorageHandler extends DefaultStorageHandler {
 
@@ -36,50 +35,72 @@ public class AgensHiveStorageHandler extends DefaultStorageHandler {
 
     @Override
     public Class<? extends InputFormat> getInputFormatClass() {
-        return MapredParquetInputFormat.class;
+        return AvroContainerInputFormat.class;
     }
 
     @Override
     public Class<? extends OutputFormat> getOutputFormatClass() {
-        return MapredParquetOutputFormat.class;
+        return AvroContainerOutputFormat.class;
     }
 
     @Override
-    public Class<? extends AbstractSerDe> getSerDeClass() {
-        return ParquetHiveSerDe.class;
-    }
+    public Class<? extends AbstractSerDe> getSerDeClass() { return AvroSerDe.class; }
 
     @Override
-    public HiveMetaHook getMetaHook() {
-        // no hook by default
-        return new AgensHiveMetaHook();
-    }
+    public HiveMetaHook getMetaHook() { return new AgensHiveMetaHook(); }
 
-    public HiveAuthorizationProvider getAuthorizationProvider()
-            throws HiveException {
+    public HiveAuthorizationProvider getAuthorizationProvider() throws HiveException {
         return new DefaultHiveAuthorizationProvider();
     }
 
+    ///////////////////////////////////////
+
     @Override
-    public void configureInputJobProperties(TableDesc tableDesc,
-                                            Map<String, String> jobProperties) {
-        // do nothing by default
+    public void configureTableJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+        LOG.info("Configuring MapReduce Job Table configuration.. ");
+        ImmutableMap<String, String> tableConfKeys = ImmutableMap.of();
+
+        Properties properties = tableDesc.getProperties();
+        System.out.println("1) TableJobProperties ==>");
+        System.out.println(properties);
+
+        AgensStorageConfigManager.copyConfigurationToJob(properties, jobProperties);
+    }
+
+    // called when SQL 'select'
+    @Override
+    public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+        LOG.info("Configuring MapReduce Job Input Properties.. ");
+        ImmutableMap<String, String> inputConfKeys = ImmutableMap.of();
+
+        Properties properties = tableDesc.getProperties();
+        System.out.println("2) InputJobProperties ==>");
+        System.out.println(properties);
+
+        AgensStorageConfigManager.copyConfigurationToJob(properties, jobProperties);
     }
 
     @Override
-    public void configureOutputJobProperties(TableDesc tableDesc,
-                                             Map<String, String> jobProperties) {
-        // do nothing by default
-    }
+    public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+        LOG.info("Configuring MapReduce Job Output Properties.. ");
+        ImmutableMap<String, String> outputConfKeys = ImmutableMap.of();
 
-    @Override
-    public void configureTableJobProperties(TableDesc tableDesc,
-                                            Map<String, String> jobProperties) {
-        //do nothing by default
+        Properties properties = tableDesc.getProperties();
+        System.out.println("3) OutputJobProperties ==>");
+        System.out.println(properties);
+
+        // do nothing by default
     }
 
     @Override
     public void configureJobConf(TableDesc tableDesc, JobConf jobConf) {
+        LOG.info("Configuring MapReduce Job configuration.. ");
+        ImmutableMap<String, String> jobConfKeys = ImmutableMap.of();
+
+        Properties properties = tableDesc.getProperties();
+        System.out.println("4) JobConf ==>");
+        System.out.println(properties);
+
         //do nothing by default
     }
 
@@ -92,6 +113,7 @@ public class AgensHiveStorageHandler extends DefaultStorageHandler {
     public void setConf(Configuration conf) {
         this.conf = conf;
     }
+
     @Override
     public String toString() {
         return this.getClass().getName();
@@ -108,14 +130,12 @@ list jars;
 select ${hiveconf:hive.server2.thrift.port};
 ==> 9999
 
-CREATE external TABLE agens_test2(
-breed STRING,
-sex STRING
-) STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
+CREATE external TABLE agens_test2 (id STRING)
+STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
 TBLPROPERTIES(
-'agens.conf.livy'='http://minmac:8998',
-'agens.conf.jar'='agens-hive-storage-handler-1.0-dev.jar',
+'agens.graph.livy'='http://minmac:8998',
 'agens.graph.datasource'='modern',
+'agens.graph.name'='cypher_test',
 'agens.graph.query'='match (a)-[:KNOWS]-(b) return a, b'
 );
 

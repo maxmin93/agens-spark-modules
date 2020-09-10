@@ -1,11 +1,13 @@
 package net.bitnine.agens.livytest;
 
+import org.apache.avro.Schema;
 import org.apache.livy.LivyClient;
 import org.apache.livy.LivyClientBuilder;
 import org.apache.spark.launcher.SparkLauncher;
 
 import java.io.File;
 import java.net.URI;
+import java.util.List;
 
 public class AvroWriteRun {
 
@@ -37,9 +39,19 @@ public class AvroWriteRun {
                 }
             }
 
-            String json = client.submit(new net.bitnine.agens.livytest.scala.AvroWriteJob()).get();
+//             String json = client.submit(new net.bitnine.agens.livytest.scala.AvroWriteJob()).get();
+//             System.out.println("schema ==>\n"+json);
 
-            System.out.println("schema ==>\n"+json);
+//            List<Schema.Field> fields = client.submit(new net.bitnine.agens.livytest.scala.AvroWriteJob()).get();
+//            for( Schema.Field field : fields ){
+//                System.out.printf("{ name: '%s', type: '%s', doc: '%s' }\n",
+//                        field.schema().getName(), field.schema().getType(), field.schema().getDoc()
+//                        );
+//            }
+
+            Schema schema = client.submit(new net.bitnine.agens.livytest.scala.AvroWriteJob()).get();
+            System.out.println("schema ==>\n"+schema.toString(true));
+
         } finally {
             client.stop(true);
         }
