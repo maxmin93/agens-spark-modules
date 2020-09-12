@@ -3,8 +3,7 @@ package net.bitnine.agens.cypher.examples
 import java.sql.Date
 
 import net.bitnine.agens.cypher.api.CAPSSession
-import net.bitnine.agens.cypher.api.io.CAPSEntityTable
-
+import net.bitnine.agens.cypher.api.io.{CAPSEntityTable, CAPSNodeTable}
 import org.apache.log4j.Logger
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.opencypher.okapi.api.io.conversion.{NodeMappingBuilder, RelationshipMappingBuilder}
@@ -22,6 +21,8 @@ object CustomDataFrameExample extends App {
 
 	// 1) Create CAPS session and retrieve Spark session
 	val spark: SparkSession = SparkSession.builder().appName(JOB_NAME).getOrCreate()
+	spark.sparkContext.setLogLevel("error")
+
 	implicit val session: CAPSSession = CAPSSession.create(spark)
 	// end::create-session[]
 
@@ -65,10 +66,42 @@ object CustomDataFrameExample extends App {
 	val friendsTable = CAPSEntityTable.create(friendOfMapping, relsDF)
 	// end::create-node-relationship-tables[]
 
+	val person1Table = CAPSEntityTable.create(personNodeMapping, nodesDF)
+	val person2Table = CAPSEntityTable.create(personNodeMapping, nodesDF)
+	val person3Table = CAPSEntityTable.create(personNodeMapping, nodesDF)
+
+	val friends1Table = CAPSEntityTable.create(friendOfMapping, relsDF)
+	val friends2Table = CAPSEntityTable.create(friendOfMapping, relsDF)
+
+	val nodeTables = List(personTable, person1Table, person2Table, person3Table)
+	val edgeTables = List(friendsTable, friends1Table, friends2Table)
+
+	// **NOTE: 둘다 안됨
+	val graph1 = session.readFrom(nodeTables ++ edgeTables)
+	val graphNodes = session.readFrom(nodeTables)
+	val graphEdges = session.readFrom(edgeTables)
+	val graphUnion = graph1.unionAll(graphNodes)
+
 	// 4) Create property graph from graph scans
 	// tag::create-graph[]
 	val graph = session.readFrom(personTable, friendsTable)
 	// end::create-graph[]
+
+	val result0 = graph.cypher("""|MATCH (a:Person)-[r:FRIEND_OF]->(b)
+								 |RETURN a.name, b.name, r.since
+								 |ORDER BY a.name""".stripMargin)
+	result0.show
+	val result1 = graph1.cypher("""|MATCH (a:Person)-[r:FRIEND_OF]->(b)
+								   |RETURN a.name, b.name, r.since
+								   |ORDER BY a.name""".stripMargin)
+	result1.show
+	val result2 = graphUnion.cypher("""|MATCH (a:Person)-[r:FRIEND_OF]->(b)
+									   |RETURN a.name, b.name, r.since
+									   |ORDER BY a.name""".stripMargin)
+	result2.show
+
+	val result3 = graphUnion.cypher("MATCH (n:Person) RETURN distinct n.name")
+	result3.show
 
 	// 5) Execute Cypher query and print results
 	// tag::run-query[]
@@ -87,7 +120,7 @@ object CustomDataFrameExample extends App {
 	// end::collect-results-nontypesafe[]
 
 	LOG.info(s"\n===========================================================")
-	result.show
+	println(safeNames)
 	/*
 ╔═════════╗
 ║ n.name  ║
@@ -106,7 +139,7 @@ object CustomDataFrameExample extends App {
 /*
 spark-submit --executor-memory 1g \
 	--master spark://minmac:7077 \
-	--class net.bitnine.agens.opencypher.examples.CustomDataFrameExample \
+	--class net.bitnine.agens.cypher.examples.CustomDataFrameExample \
 	target/agens-spark-cypher-1.0-dev.jar
 
 */

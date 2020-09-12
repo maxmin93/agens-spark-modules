@@ -109,7 +109,7 @@ case class CAPSSchema private[schema](schema: Schema) extends Schema {
   override def isEmpty: Boolean = schema.isEmpty
 
 /*
-  // ** Compile Error for scope private[opencypher]
+  // ** Compile Error for scope private[agens]
   override def dropPropertiesFor(combo: Set[String]): Schema = schema.dropPropertiesFor(combo)
   override def forNode(labelConstraints: Set[String]): Schema = schema.forNode(labelConstraints)
   override def forRelationship(relType: CTRelationship): Schema = schema.forRelationship(relType)

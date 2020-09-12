@@ -5,7 +5,7 @@ import org.opencypher.okapi.api.types.CTRelationship
 
 
 /*
-// private[opencypher] ==> 상속 되어도 super 의 scope 제약은 유지됨
+// private[agens] ==> 상속 되어도 super 의 scope 제약은 유지됨
 //
 trait SchemaWrapper extends Schema {
 	override def dropPropertiesFor(labelCombination: Set[String]): Schema

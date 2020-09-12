@@ -8,16 +8,19 @@ import org.opencypher.okapi.api.graph._
 import org.opencypher.okapi.api.table.CypherRecords
 import org.opencypher.okapi.api.value.CypherValue.CypherMap
 import org.opencypher.okapi.impl.exception.UnsupportedOperationException
+import org.opencypher.okapi.api.schema.Schema
 import org.opencypher.okapi.relational.api.graph.RelationalCypherSession
-import org.opencypher.okapi.relational.api.planning.RelationalCypherResult
-
-import scala.reflect.runtime.universe._
+import org.opencypher.okapi.relational.api.planning.{RelationalCypherResult, RelationalRuntimeContext}
+import org.opencypher.okapi.relational.api.io.EntityTable
+import org.opencypher.okapi.relational.api.table.Table
+import org.opencypher.okapi.relational.impl.graph.ScanGraph
 
 import net.bitnine.agens.cypher.api.io._
 import net.bitnine.agens.cypher.impl.graph.CAPSGraphFactory
 import net.bitnine.agens.cypher.impl.table.SparkTable.DataFrameTable
 import net.bitnine.agens.cypher.impl.{CAPSRecords, CAPSRecordsFactory}
 
+import scala.reflect.runtime.universe._
 
 /**
   * Spark specific Cypher session implementation.
@@ -55,6 +58,19 @@ sealed class CAPSSession(val sparkSession: SparkSession) extends RelationalCyphe
   ): PropertyGraph = {
     graphs.create(CAPSNodeTable(nodes), CAPSRelationshipTable(relationships))
   }
+
+  // **추가
+  def readFrom[T <: Table[T] : TypeTag](entityTables: List[EntityTable[T]])(implicit session: RelationalCypherSession[T]): PropertyGraph = {
+    create(None, entityTables: _ *)
+  }
+
+  // **추가
+  def create[T <: Table[T] : TypeTag](maybeSchema: Option[Schema], entityTables: EntityTable[T]*)(implicit session: RelationalCypherSession[T]): PropertyGraph = {
+    val allTables = entityTables
+    val schema = maybeSchema.getOrElse(allTables.map(_.schema).reduce[Schema](_ ++ _))
+    new ScanGraph(allTables, schema)
+  }
+
 
   def sql(query: String): CAPSRecords =
     records.wrap(sparkSession.sql(query))

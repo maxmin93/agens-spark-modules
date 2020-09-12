@@ -36,18 +36,45 @@ object DataFrameInputExample {
 		val personTable = CAPSNodeTable(Set("Person"), nodesDF)
 		val friendsTable = CAPSRelationshipTable("KNOWS", relsDF)
 
+		val person1Table = CAPSNodeTable(Set("Person1"), nodesDF)
+		val person2Table = CAPSNodeTable(Set("Person1"), nodesDF)
+		val person3Table = CAPSNodeTable(Set("Person1"), nodesDF)
+
+		val nodeTables = List(personTable, person1Table, person2Table, person3Table)
+		val edgeTables = List(friendsTable)
+
+		// **NOTE: 둘다 안됨
+		val graph1 = session.readFrom(nodeTables ++ edgeTables)
+		val graphNodes = session.readFrom(nodeTables)
+		val graphEdges = session.readFrom(edgeTables)
+		val graphUnion = graphNodes.unionAll(graphEdges)
+
 		// 4) Create property graph from graph scans
-		val graph = session.readFrom(personTable, friendsTable)
+		val graph = session.readFrom(personTable, friendsTable)	//, person1Table, person2Table, person3Table)
 
 		// 5) Execute Cypher query and print results
-		val result = graph.cypher("MATCH (n:Person) RETURN n.name")
+		val result = graph.cypher("""|MATCH (a:Person)-[r:KNOWS]->(b)
+									   |RETURN a.name, b.name, r.since
+									   |ORDER BY a.name""".stripMargin)
+		result.show
+		val result1 = graph1.cypher("""|MATCH (a:Person)-[r:KNOWS]->(b)
+									 |RETURN a.name, b.name, r.since
+									 |ORDER BY a.name""".stripMargin)
+		result1.show
+
+		val result2 = graphUnion.cypher("""|MATCH (a:Person)-[r:KNOWS]->(b)
+													  |RETURN a.name, b.name, r.since
+													  |ORDER BY a.name""".stripMargin)
+		result2.show
+
+		val result3 = graphUnion.cypher("MATCH (n:Person) RETURN n.name")
 
 		// 6) Collect results into string by selecting a specific column.
 		//    This operation may be very expensive as it materializes results locally.
 		// 6a) type safe version, discards values with wrong type
-		val safeNames: Set[String] = result.records.collect.flatMap(_ ("n.name").as[String]).toSet
+		val safeNames: Set[String] = result3.records.collect.flatMap(_ ("n.name").as[String]).toSet
 		// 6b) unsafe version, throws an exception when value cannot be cast
-		val unsafeNames: Set[String] = result.records.collect.map(_ ("n.name").cast[String]).toSet
+		val unsafeNames: Set[String] = result3.records.collect.map(_ ("n.name").cast[String]).toSet
 
 		println("\n===============================")
 		println(safeNames)
@@ -62,7 +89,7 @@ object DataFrameInputExample {
 /*
 spark-submit --executor-memory 1g \
 	--master spark://minmac:7077 \
-	--class net.bitnine.agens.opencypher.examples.DataFrameInputExample \
+	--class net.bitnine.agens.cypher.examples.DataFrameInputExample \
 	target/agens-spark-cypher-1.0-dev.jar
 
 */
