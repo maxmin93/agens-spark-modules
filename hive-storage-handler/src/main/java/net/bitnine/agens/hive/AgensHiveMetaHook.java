@@ -30,7 +30,7 @@ public class AgensHiveMetaHook implements HiveMetaHook {
      */
     @Override
     public void preCreateTable(Table table) throws MetaException {
-/*
+
         // Check all mandatory table properties
         for (String property : AgensHiveConstants.MANDATORY_TABLE_PROPERTIES) {
             if (Strings.isNullOrEmpty(table.getParameters().get(property))) {
@@ -38,20 +38,10 @@ public class AgensHiveMetaHook implements HiveMetaHook {
             }
         }
 
-        // Check compatibility with BigQuery features
-        // TODO: accept DATE column 1 level partitioning
-        if (table.getPartitionKeysSize() > 0) {
-            throw new MetaException("Creation of Partition table is not supported.");
-        }
-
-        if (table.getSd().getBucketColsSize() > 0) {
-            throw new MetaException("Creation of bucketed table is not supported");
-        }
-
         if(!Strings.isNullOrEmpty(table.getSd().getLocation())) {
             throw new MetaException("Cannot create table in BigQuery with Location property.");
         }
-*/
+
         // external table using avro
         // location:hdfs://minmac:9000/user/agens/temp/person.avro,
         // inputFormat:org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat,
@@ -61,19 +51,19 @@ public class AgensHiveMetaHook implements HiveMetaHook {
         System.err.printf("preCreateTable(Table): %s.%s.%s\n", table.getDbName(), table.getOwner(), table.getTableName());
         System.err.println("==> "+table.getSd()+"\n");
 
-        List<FieldSchema> columns = new ArrayList<>();
-//        columns.add(new FieldSchema("id", "bigint", "Id column"));
-//        columns.add(new FieldSchema("name", "string", "Id column"));
-//        columns.add(new FieldSchema("skills", "array<string>",""));
-        sd.setCols(columns);
+        // remove columns
+        sd.setCols(new ArrayList<FieldSchema>());
+        // remove avro default schema (actually this is a dummy)
+        table.getParameters().remove("avro.schema.url");
 
+        // set location of avro result after executing cypher
         sd.setLocation("/user/agens/temp/person.avro");
+        // set formats for avro input and output
         sd.setInputFormat(AvroContainerInputFormat.class.getCanonicalName());
         sd.setOutputFormat(AvroContainerOutputFormat.class.getCanonicalName());
 
-        String avroSchemaJson = LivyClientTest.getAvroSchema();
-        table.getParameters().put("avro.schema.literal", avroSchemaJson);
-        table.getParameters().remove("avro.schema.url");
+        String schemaJson = ExecuteCypher.runCypher(table.getParameters());
+        table.getParameters().put("avro.schema.literal", schemaJson);
     }
 
     @Override

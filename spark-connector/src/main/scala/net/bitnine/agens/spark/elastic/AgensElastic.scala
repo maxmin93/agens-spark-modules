@@ -1,7 +1,6 @@
 package net.bitnine.agens.spark.elastic
 
-import net.bitnine.agens.spark.AgensConfig
-
+import net.bitnine.agens.spark.{AgensBuilder, AgensConf}
 import org.apache.http.HttpHost
 import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
 import org.apache.http.impl.client.BasicCredentialsProvider
@@ -26,13 +25,21 @@ object AgensElastic extends Serializable {
 
 	def hello = (msg:String) => s"Hello, AgensElastic (since 2020-08-01) - msg: $msg"
 
-	def apply(conf: AgensConfig): AgensElastic = {
-		new AgensElastic(if( conf != null ) conf else AgensConfig.default())
+	def apply(conf: AgensConf): AgensElastic = {
+		val conf = new AgensConf(
+			"minmac",
+			"29200",
+			"elastic",
+			"bitnine",
+			"agensvertex",
+			"agensedge"
+		)
+		new AgensElastic(if( conf != null ) conf else AgensBuilder.defaultConf)
 	}
 
 	def main(args: Array[String]): Unit = {
 
-		val elastic = new AgensElastic(AgensConfig.default)
+		val elastic = new AgensElastic(AgensBuilder.defaultConf)
 
 		LOG.info(s"\n===========================================================")
 
@@ -44,7 +51,7 @@ object AgensElastic extends Serializable {
 		elastic.close
 		LOG.info(hello("TEST"))
 
-		val jes = new AgensJavaElastic(AgensConfig.default())
+		val jes = new AgensJavaElastic(AgensBuilder.defaultConf)
 		val datasources = jes.datasourcesToScala(elastic.conf.vertexIndex)
 		val labels = jes.labelsToScala(elastic.conf.vertexIndex, datasources.head._1)
 		val keys = jes.keysToScala(elastic.conf.vertexIndex, datasources.head._1, labels.head._1)
@@ -63,7 +70,7 @@ spark-submit --executor-memory 1g \
 	target/agens-spark-connector-full-1.0-dev.jar
 */
 
-class AgensElastic(val conf: AgensConfig=null) extends Serializable {
+class AgensElastic(val conf: AgensConf=null) extends Serializable {
 
 	var client: RestHighLevelClient = null;
 

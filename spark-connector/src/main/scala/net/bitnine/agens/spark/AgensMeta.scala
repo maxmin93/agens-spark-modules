@@ -1,7 +1,6 @@
 package net.bitnine.agens.spark
 
 import net.bitnine.agens.spark.elastic.AgensJavaElastic
-
 import org.apache.spark.sql.types.{DataType, StructField, StructType}
 import org.apache.spark.sql.types.DataTypes.{BooleanType, ByteType, DateType, DoubleType, FloatType, IntegerType, LongType, ShortType, StringType, TimestampType}
 
@@ -10,11 +9,11 @@ import scala.collection.mutable
 
 object AgensMeta {
 
-	def apply(conf: AgensConfig):AgensMeta = {
+	def apply(conf: AgensConf):AgensMeta = {
 		scan(conf)
 	}
 
-	def scan(conf: AgensConfig): AgensMeta ={
+	def scan(conf: AgensConf): AgensMeta ={
 		val elastic = new AgensJavaElastic(conf)
 
 		val dsV = elastic.datasourcesToScala(conf.vertexIndex)
@@ -61,7 +60,7 @@ object AgensMeta {
 	// ** Usage by curring
 	// ==> AgensMeta.datasource(datasource)(agens.conf)
 	//
-	def datasource(datasource: String)(conf: AgensConfig): (Long,Long) = {
+	def datasource(datasource: String)(conf: AgensConf): (Long,Long) = {
 		assert(conf != null, "need to AgensConfig with initialization")
 		val elastic = new AgensJavaElastic(conf)
 
@@ -70,7 +69,7 @@ object AgensMeta {
 		(dsV.getOrElse(datasource, 0L).asInstanceOf[Long], dsE.getOrElse(datasource, 0L).asInstanceOf[Long])
 	}
 
-	def labels(datasource: String)(conf: AgensConfig): (Map[String, Long],Map[String, Long]) = {
+	def labels(datasource: String)(conf: AgensConf): (Map[String, Long],Map[String, Long]) = {
 		assert(conf != null, "need to AgensConfig with initialization")
 		val elastic = new AgensJavaElastic(conf)
 
@@ -80,7 +79,7 @@ object AgensMeta {
 	}
 
 	// datasource -> label -> key : (doc_count, type, agg_count)
-	def keys(datasource: String, label:String)(conf: AgensConfig): Map[String, (String,Long,Boolean)] = {
+	def keys(datasource: String, label:String)(conf: AgensConf): Map[String, (String,Long,Boolean)] = {
 		assert(conf != null, "need to AgensConfig with initialization")
 		val elastic = new AgensJavaElastic(conf)
 
@@ -97,6 +96,7 @@ object AgensMeta {
 class AgensMeta(val vertexIndex:String, val edgeIndex:String){
 
 	val schemaBase = StructType(Array(
+		StructField("timestamp", TimestampType, false),
 		StructField("datasource", StringType, false),
 		StructField("id", StringType, false),
 		StructField("label", StringType, false)
@@ -137,7 +137,7 @@ class AgensMeta(val vertexIndex:String, val edgeIndex:String){
 
 		def property(name:String): MetaProperty = properties.get(name).getOrElse(null)
 
-		def itype: String =
+		def idxType: String =
 			if( index == vertexIndex ) "vertex"
 			else if( index == edgeIndex ) "edge"
 			else "none"
@@ -160,8 +160,8 @@ class AgensMeta(val vertexIndex:String, val edgeIndex:String){
 			vertices: mutable.HashMap[String, MetaLabel] = new mutable.HashMap(),
 			edges: mutable.HashMap[String, MetaLabel] = new mutable.HashMap()
 	){
-		def size = sizeVertex + sizeEdge
-		def labels = vertices ++ edges		// Map.++(Map)
+		def count = (sizeVertex, sizeEdge)
+		def labels = (vertices ++ edges).toMap		// Map.++(Map)
 
 		def label(name:String): MetaLabel = {
 			if( vertices.contains(name) ) vertices.get(name).get
@@ -184,3 +184,4 @@ class AgensMeta(val vertexIndex:String, val edgeIndex:String){
 
 	def datasource(name: String): MetaDatasource = datasources.get(name).getOrElse(null)
 }
+

@@ -17,6 +17,8 @@ import scala.collection.JavaConverters._
  */
 object SchemaConverters {
 
+	val AGENS_AVRO_NAMESPACE = "net.bitnine.agens.hive"
+
 	class IncompatibleSchemaException(msg: String, ex: Throwable = null) extends Exception(msg, ex)
 
 	case class SchemaType(dataType: DataType, nullable: Boolean)

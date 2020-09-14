@@ -1,4 +1,4 @@
-package net.bitnine.agens.hive;
+package net.bitnine.agens.livy;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -8,17 +8,17 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 // **참고 : hive-jdbc-storage-handler
-public class AgensStorageConfigManager {
+public class AgensHiveConfigManager {
 
     public static final String CONFIG_PREFIX = "agens.graph";
-    private static final EnumSet<AgensStorageConfig> DEFAULT_REQUIRED_PROPERTIES = EnumSet.of(
-                    AgensStorageConfig.LIVY_URL,
-                    AgensStorageConfig.DATASOURCE,
-                    AgensStorageConfig.NAME,
-                    AgensStorageConfig.QUERY
+    private static final EnumSet<AgensHiveConfig> DEFAULT_REQUIRED_PROPERTIES = EnumSet.of(
+                    AgensHiveConfig.LIVY_URL,
+                    AgensHiveConfig.DATASOURCE,
+                    AgensHiveConfig.NAME,
+                    AgensHiveConfig.QUERY
     );
 
-    private AgensStorageConfigManager() {
+    private AgensHiveConfigManager() {
     }
 
     public static void copyConfigurationToJob(Properties props, Map<String, String> jobProps) {
@@ -40,26 +40,22 @@ public class AgensStorageConfigManager {
     }
 
     private static void checkRequiredPropertiesAreDefined(Properties props) {
-        for (AgensStorageConfig configKey : DEFAULT_REQUIRED_PROPERTIES) {
-            String propertyKey = configKey.getPropertyName();
+        for (AgensHiveConfig configKey : DEFAULT_REQUIRED_PROPERTIES) {
+            String propertyKey = configKey.fullName();
             if ((props == null) || (!props.containsKey(propertyKey)) || (isEmptyString(props.getProperty(propertyKey)))) {
                 throw new IllegalArgumentException("Property " + propertyKey + " is required.");
             }
         }
-
-//        DatabaseType dbType = DatabaseType.valueOf(props.getProperty(JdbcStorageConfig.DATABASE_TYPE.getPropertyName()));
-//        CustomConfigManager configManager = CustomConfigManagerFactory.getCustomConfigManagerFor(dbType);
-//        configManager.checkRequiredProperties(props);
     }
 
 
-    public static String getConfigValue(AgensStorageConfig key, Configuration config) {
-        return config.get(key.getPropertyName());
+    public static String getConfigValue(AgensHiveConfig key, Configuration config) {
+        return config.get(key.fullName());
     }
 
 
     public static String getQueryToExecute(Configuration config) {
-        String query = config.get(AgensStorageConfig.QUERY.getPropertyName());
+        String query = config.get(AgensHiveConfig.QUERY.fullName());
 
         return query;
     }

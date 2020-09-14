@@ -1,6 +1,6 @@
 package net.bitnine.agens.spark.elastic;
 
-import net.bitnine.agens.spark.AgensConfig;
+import net.bitnine.agens.spark.AgensConf;
 import net.bitnine.agens.spark.AgensJavaHelper;
 
 import org.apache.http.HttpHost;
@@ -35,10 +35,10 @@ public final class AgensJavaElastic {
 
     private static final Logger LOG = Logger.getLogger(AgensJavaElastic.class);
 
-    private final AgensConfig conf;
+    private final AgensConf conf;
     private RestHighLevelClient client = null;
 
-    public AgensJavaElastic(AgensConfig conf){
+    public AgensJavaElastic(AgensConf conf){
         assert( conf != null && conf.host() != null && conf.port() != null );
         this.conf = conf;
     }

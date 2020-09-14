@@ -1,7 +1,7 @@
-package net.bitnine.agens.hive;
+package net.bitnine.agens.livy;
 
 // **참고 : hive-jdbc-storage-handler
-public enum AgensStorageConfig {
+public enum AgensHiveConfig {
 
     LIVY_URL("livy", true),
     DATASOURCE("datasource", true),
@@ -15,17 +15,17 @@ public enum AgensStorageConfig {
     private String propertyName;
     private boolean required = false;
 
-    AgensStorageConfig(String propertyName, boolean required) {
+    AgensHiveConfig(String propertyName, boolean required) {
         this.propertyName = propertyName;
         this.required = required;
     }
 
-    AgensStorageConfig(String propertyName) {
+    AgensHiveConfig(String propertyName) {
         this.propertyName = propertyName;
     }
 
-    public String getPropertyName() {
-        return AgensStorageConfigManager.CONFIG_PREFIX + "." + propertyName;
+    public String fullName() {
+        return AgensHiveConfigManager.CONFIG_PREFIX + "." + propertyName;
     }
 
     public boolean isRequired() {

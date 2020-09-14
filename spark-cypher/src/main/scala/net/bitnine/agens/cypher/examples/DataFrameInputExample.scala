@@ -45,12 +45,15 @@ object DataFrameInputExample {
 
 		// **NOTE: 둘다 안됨
 		val graph1 = session.readFrom(nodeTables ++ edgeTables)
+		println("** schema1: "+graph1.schema.toString+"\n")
+
 		val graphNodes = session.readFrom(nodeTables)
 		val graphEdges = session.readFrom(edgeTables)
 		val graphUnion = graphNodes.unionAll(graphEdges)
 
 		// 4) Create property graph from graph scans
 		val graph = session.readFrom(personTable, friendsTable)	//, person1Table, person2Table, person3Table)
+		println("** schema0: "+graph.schema.toString+"\n")
 
 		// 5) Execute Cypher query and print results
 		val result = graph.cypher("""|MATCH (a:Person)-[r:KNOWS]->(b)
