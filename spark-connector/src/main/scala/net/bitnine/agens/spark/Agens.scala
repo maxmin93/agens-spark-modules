@@ -1,14 +1,18 @@
 package net.bitnine.agens.spark
 
 import net.bitnine.agens.cypher.api.CAPSSession
+import net.bitnine.agens.cypher.api.io.util.CAPSGraphExport.CanonicalTableExport
+import net.bitnine.agens.cypher.api.io.util.HiveTableName
 import net.bitnine.agens.spark.Agens.{schemaE, schemaV}
 import net.bitnine.agens.cypher.api.io.{CAPSEntityTable, CAPSNodeTable, CAPSRelationshipTable}
+import net.bitnine.agens.cypher.impl.CAPSConverters.RichPropertyGraph
 import net.bitnine.agens.spark.AgensHelper.{explodeEdge, explodeVertex, wrappedEdgeTable, wrappedVertexTable}
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions.{col, explode}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.opencypher.okapi.api.graph.{CypherResult, PropertyGraph}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.opencypher.okapi.api.graph.{CypherResult, GraphName, Node, PropertyGraph, Relationship}
+import org.opencypher.okapi.impl.graph.CypherCatalog
 import org.opencypher.okapi.relational.api.planning.RelationalCypherResult
 
 import scala.language.implicitConversions
@@ -43,62 +47,7 @@ object Agens extends Serializable {
 		val size = agens.count(datasource)
 		val meta = agens.meta.datasource(datasource)
 
-		val graph = agens.graph(datasource)
-		println("** schema: "+graph.schema.toString)
-
-		agens.session.catalog.store("modern", graph)
-
-		val result1 = agens.session.cypher("FROM GRAPH session.modern MATCH (n) RETURN n")
-		result1.show
-
-		val result2 = agens.session.cypher("FROM GRAPH session.modern MATCH ()-[e]-() RETURN e")
-		result2.show
-
-//		val query = "MATCH (a)-[:knows]->[b] RETURN a.name, b.name"
-		val result3 = graph.cypher("""|MATCH (a:person)-[r:knows]->(b)
-									  |RETURN a.name$, b.name$
-									  |ORDER BY a.name$""".stripMargin)
-		result3.show
-
-		val result4 = graph.cypher("""|MATCH (a)-[r:knows]->(b)
-									  |RETURN a, b""".stripMargin)
-		result4.show
-
-		println("\n==========================\n")
-
-		val result5 = graph.cypher("MATCH (a)-[r:knows]->(b) RETURN a, b")
-		result5.show
-
-//		val name = "modern_test1"
-//		results.saveAsAvro(name)
-
-/*
-		LOG.info("\n============================================")
-
-		val graphName = GraphName("sn")
-		val graph = socialNetwork.asCaps
-
-		val schema = socialNetwork.schema
-		val nodeWrites = schema.labelCombinations.combos.map { combo =>
-			val nodeType = combo.toList.sorted.mkString("_")		// multi-label 이라서?
-			val tableName = HiveTableName(hiveDatabaseName, graphName, Node, Set(nodeType.toLowerCase))
-			val df = graph.canonicalNodeTable(combo)
-			df.write.mode("overwrite").saveAsTable(tableName)
-			tableName
-		}
-		val relWrites = schema.relationshipTypes.map { relType =>
-			val tableName = HiveTableName(hiveDatabaseName, graphName, Relationship, Set(relType.toLowerCase))
-			val df = graph.canonicalRelationshipTable(relType)
-			df.write.mode("overwrite").saveAsTable(tableName)
-			tableName
-		}
-		println(s"** nodeWrites: $nodeWrites")
-		println(s"** relWrites: $relWrites")
-
-		session.sparkSession.sql(s"show tables in ${hiveDatabaseName}").show
-		// **SparkSQL : spark.catalog.listTables("socialnetwork").show
-
- */
+		val graphModern = agens.graph(datasource)
 
 	}
 
@@ -119,9 +68,14 @@ class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
 
 	implicit private val session: CAPSSession = CAPSSession.create(spark)
 
+	implicit val catalog:CypherCatalog = session.catalog
+
+	val emptyDf = this.spark.createDataFrame(this.spark.sparkContext.emptyRDD[Row], schemaV)
+
 	///////////////////////////////////////
 
-	def metaRoot():AgensMeta = this.meta
+
+	// def metaRoot = this.meta.datasources
 
 	def count(datasource:String): Long = {
 		assert(meta.datasources.contains(datasource), "wrong datasource")
@@ -146,10 +100,22 @@ class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
 		session.readFrom(vertexTables ++ edgeTables)
 	}
 
+	// Agens Cypher
 	def cypher(datasource: String, query: String): CypherResult = {
 		val graph: PropertyGraph = this.graph(datasource)
 		if( graph == null ) return RelationalCypherResult.empty
 		graph.cypher(query)
+	}
+
+	def cypher(query: String): CypherResult = {
+		if( !query.toUpperCase.contains("FROM GRAPH") ) return RelationalCypherResult.empty
+		this.session.cypher(query)
+	}
+
+	// Spark SQL
+	def sql(query: String): DataFrame = {
+		if( this.session == null ) null
+		this.session.sparkSession.sql(query)
 	}
 
 	///////////////////////////////////////
