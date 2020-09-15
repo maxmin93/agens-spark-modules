@@ -1,20 +1,23 @@
 package net.bitnine.agens.spark
 
 import net.bitnine.agens.cypher.api.{CAPSSession, FSGraphSources}
+import net.bitnine.agens.cypher.api.CAPSSession._
 import net.bitnine.agens.cypher.api.io.util.CAPSGraphExport.CanonicalTableExport
 import net.bitnine.agens.cypher.api.io.util.HiveTableName
 import net.bitnine.agens.spark.Agens.{schemaE, schemaV}
 import net.bitnine.agens.cypher.api.io.{CAPSEntityTable, CAPSNodeTable, CAPSRelationshipTable}
 import net.bitnine.agens.cypher.impl.CAPSConverters.RichPropertyGraph
+import net.bitnine.agens.cypher.impl.CAPSRecords
 import net.bitnine.agens.spark.AgensHelper.{explodeEdge, explodeVertex, wrappedEdgeTable, wrappedVertexTable}
 import org.apache.log4j.Logger
-import org.apache.spark.sql.functions.{col, explode}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession}
 import org.opencypher.okapi.api.graph.{CypherResult, GraphName, Namespace, Node, PropertyGraph, Relationship}
 import org.opencypher.okapi.api.io.PropertyGraphDataSource
+import org.opencypher.okapi.impl.exception.UnsupportedOperationException
 import org.opencypher.okapi.impl.graph.CypherCatalog
 import org.opencypher.okapi.relational.api.planning.RelationalCypherResult
+import org.opencypher.okapi.api.value.CypherValue.CypherMap
 
 import scala.language.implicitConversions
 
@@ -38,6 +41,17 @@ object Agens extends Serializable {
 	val schemaE = schemaV.
 			add(StructField("src", StringType, false)).
 			add(StructField("dst", StringType, false))
+
+	implicit class ResultsAsDF(val results: CypherResult) extends AnyVal {
+		def asDataFrame: DataFrame = results.records match {
+			case caps: CAPSRecords => caps.table.df
+			case _ => throw UnsupportedOperationException(s"can only handle CAPS results, got ${results.records}")
+		}
+		def asDataset: Dataset[CypherMap] = results.records match {
+			case caps: CAPSRecords => caps.toCypherMaps
+			case _ => throw UnsupportedOperationException(s"can only handle CAPS results, got ${results.records}")
+		}
+	}
 
 	def main(args: Array[String]): Unit = {
 
@@ -75,6 +89,7 @@ class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
 	implicit val catalog:CypherCatalog = session.catalog
 
 	val emptyDf = this.spark.createDataFrame(this.spark.sparkContext.emptyRDD[Row], schemaV)
+	val emptyGraph = this.catalog.graph("emptyGraph")
 
 	///////////////////////////////////////
 
@@ -136,7 +151,7 @@ class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
 	}
 
 	// by Parquet format
-	def saveToHive(graphSource: PropertyGraph, gName: String, dbPath: String="agens"): Unit = {
+	def saveGraphToHive(graphSource: PropertyGraph, gName: String, dbPath: String="agens"): Unit = {
 		this.session.sparkSession.sql(s"CREATE DATABASE IF NOT EXISTS $dbPath")
 
 		val graphName = GraphName( gName )
@@ -159,6 +174,14 @@ class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
 		// for DEBUG
 		println(s"** Vertices: $nodeWrites")
 		println(s"** Edges: $relWrites")
+	}
+
+	def saveResultToAvro(result: CypherResult, saveName: String): Unit = {
+		val df = result.records.asDataFrame
+		val tempPath =  if( this.conf.tempPath.endsWith("/") ) this.conf.tempPath + saveName
+						else this.conf.tempPath + "/" + saveName
+		println("saveResultToAvro: "+tempPath)
+		df.write.mode(SaveMode.Overwrite).format("avro").save(tempPath)
 	}
 
 	///////////////////////////////////////

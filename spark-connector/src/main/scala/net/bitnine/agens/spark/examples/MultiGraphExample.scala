@@ -1,10 +1,12 @@
 package net.bitnine.agens.spark.examples
 
 import net.bitnine.agens.cypher.api.GraphSources
+import net.bitnine.agens.cypher.impl.CAPSRecords
+import net.bitnine.agens.spark.Agens.ResultsAsDF
 import net.bitnine.agens.spark.AgensBuilder
 import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
-import org.opencypher.okapi.api.graph.{GraphName, Namespace}
+import org.opencypher.okapi.api.graph.{CypherResult, GraphName, Namespace}
 
 object MultiGraphExample extends App {
 
@@ -67,7 +69,7 @@ object MultiGraphExample extends App {
 	////////////////////////////////////
 
 	// 6) Query for product recommendations
-	val recommendations = recommendationGraph.cypher(
+	val recommendations:CypherResult = recommendationGraph.cypher(
 		"""|MATCH (person:person)-[:knows]-(friend:person),
 		   |      (friend)-[:IS]->(customer:Customer),
 		   |      (customer)-[:BOUGHT]->(product:Product)
@@ -76,6 +78,9 @@ object MultiGraphExample extends App {
     		""".stripMargin)
 
 	recommendations.show
+
+	// future 처리가 필요하지 않나?
+	agens.saveResultToAvro(recommendations, "recommendations")
 
 }
 /*

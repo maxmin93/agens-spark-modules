@@ -12,7 +12,8 @@ case class AgensBuilder(
 		private var paramUser: String = null,
 		private var paramPassword: String = null,
 		private var paramVertexIndex: String = null,
-		private var paramEdgeIndex: String = null
+		private var paramEdgeIndex: String = null,
+		private var paramTempPath: String = null
 ) {
 	def host(host: String):AgensBuilder = copy(paramHost=host)
 	def port(port: String):AgensBuilder = copy(paramPort=port)
@@ -20,7 +21,7 @@ case class AgensBuilder(
 	def password(password: String):AgensBuilder = copy(paramPassword=password)
 	def vertexIndex(vertexIndex: String):AgensBuilder = copy(paramVertexIndex=vertexIndex)
 	def edgeIndex(edgeIndex: String):AgensBuilder = copy(paramEdgeIndex=edgeIndex)
-	// def datasource(datasource: String):AgensBuilder = copy(paramDatasource=datasource)
+	def tempPath(tempPath: String):AgensBuilder = copy(paramTempPath=tempPath)
 
 	def build: Agens = {
 		require(sparkSession != null, "Spark session must be given for creating Agens instance")
@@ -32,7 +33,7 @@ case class AgensBuilder(
 		if( paramPassword != null ) conf.password = paramPassword
 		if( paramVertexIndex != null ) conf.vertexIndex = paramVertexIndex
 		if( paramEdgeIndex != null ) conf.edgeIndex = paramEdgeIndex
-		// if( paramDatasource != null ) conf.datasource = paramDatasource
+		if( paramTempPath != null ) conf.tempPath = paramTempPath
 
 		new Agens(sparkSession, conf)
 	}
@@ -52,11 +53,12 @@ object AgensBuilder{
 		val port = sparkConf.getOption(s"$prefix.port").getOrElse(null)
 		val vertexIndex = sparkConf.getOption(s"$prefix.vertexIndex").getOrElse(null)
 		val edgeIndex = sparkConf.getOption(s"$prefix.edgeIndex").getOrElse(null)
+		val tempPath = sparkConf.getOption(s"$prefix.tempPath").getOrElse(null)
 
 		val user = sparkConf.getOption(s"$prefix.user").getOrElse(null)
 		val password = sparkConf.getOption(s"$prefix.password").getOrElse(null)
 
-		new AgensBuilder(sparkSession, host, port, user, password, vertexIndex, edgeIndex)
+		new AgensBuilder(sparkSession, host, port, user, password, vertexIndex, edgeIndex, tempPath)
 	}
 
 	private def local(): SparkSession = {
@@ -82,7 +84,8 @@ object AgensBuilder{
 		"elastic",
 		"bitnine",
 		"agensvertex",
-		"agensedge"
+		"agensedge",
+		"/user/agens/temp"
 	)
 
 	def default(sparkSession: SparkSession = null): Agens = {

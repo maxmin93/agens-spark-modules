@@ -2,11 +2,12 @@ package net.bitnine.agens.spark
 
 case class AgensConf(
 		var host: String = "localhost",
-		var port: String = "9200",				// Int = 9200,
-		var user: String = "",					// default: elastic
-		var password: String = "",				// default: changeme
+		var port: String = "9200",					// Int = 9200,
+		var user: String = "",						// default: elastic
+		var password: String = "",					// default: changeme
 		var vertexIndex: String = "agensvertex",
-		var edgeIndex: String = "agensedge"
+		var edgeIndex: String = "agensedge",
+		var tempPath: String = "/user/agens/temp"	// save Df using avro format
 ) {
 	def es = Map[String,String](
 		"es.nodes"->this.host,

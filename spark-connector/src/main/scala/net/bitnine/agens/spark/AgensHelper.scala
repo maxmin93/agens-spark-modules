@@ -127,6 +127,7 @@ object AgensHelper {
 //				.withImpliedLabel(label)
 //				.build
 //		CAPSEntityTable.create(mapping, df)
+
 		CAPSNodeTable(Set(label), df)
 	}
 
@@ -138,6 +139,9 @@ object AgensHelper {
 //				.withRelType(label)
 //				.build
 //		CAPSEntityTable.create(mapping, df)
+
 		CAPSRelationshipTable(label, df)
 	}
+
+
 }

@@ -42,7 +42,7 @@ object SaveToHiveExample extends App {
 
 	val graphModern = agens.graph(datasource)
 
-	agens.saveToHive(graphModern, datasource, dbPath)
+	agens.saveGraphToHive(graphModern, datasource, dbPath)
 
 	agens.sql(s"show tables in $dbPath").show
 }
