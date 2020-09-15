@@ -23,6 +23,8 @@ case class AgensBuilder(
 	// def datasource(datasource: String):AgensBuilder = copy(paramDatasource=datasource)
 
 	def build: Agens = {
+		require(sparkSession != null, "Spark session must be given for creating Agens instance")
+
 		val conf = new AgensConf()
 		if( paramHost != null ) conf.host = paramHost
 		if( paramPort != null ) conf.port = paramPort
@@ -46,13 +48,13 @@ object AgensBuilder{
 		sparkConf.set("spark.sql.shuffle.partitions", "12")
 		sparkConf.set("spark.default.parallelism", "8")
 
-		val host = sparkConf.getOption(s"$prefix.host").getOrElse("localhost")
-		val port = sparkConf.getOption(s"$prefix.port").getOrElse("9200")
-		val vertexIndex = sparkConf.getOption(s"$prefix.vertexIndex").getOrElse("agensvertex")
-		val edgeIndex = sparkConf.getOption(s"$prefix.edgeIndex").getOrElse("agensedge")
+		val host = sparkConf.getOption(s"$prefix.host").getOrElse(null)
+		val port = sparkConf.getOption(s"$prefix.port").getOrElse(null)
+		val vertexIndex = sparkConf.getOption(s"$prefix.vertexIndex").getOrElse(null)
+		val edgeIndex = sparkConf.getOption(s"$prefix.edgeIndex").getOrElse(null)
 
-		val user = sparkConf.getOption(s"$prefix.user").get			// default: elastic
-		val password = sparkConf.getOption(s"$prefix.password").get	// default: changeme
+		val user = sparkConf.getOption(s"$prefix.user").getOrElse(null)
+		val password = sparkConf.getOption(s"$prefix.password").getOrElse(null)
 
 		new AgensBuilder(sparkSession, host, port, user, password, vertexIndex, edgeIndex)
 	}

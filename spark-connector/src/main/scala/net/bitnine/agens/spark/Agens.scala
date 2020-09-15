@@ -1,6 +1,6 @@
 package net.bitnine.agens.spark
 
-import net.bitnine.agens.cypher.api.CAPSSession
+import net.bitnine.agens.cypher.api.{CAPSSession, FSGraphSources}
 import net.bitnine.agens.cypher.api.io.util.CAPSGraphExport.CanonicalTableExport
 import net.bitnine.agens.cypher.api.io.util.HiveTableName
 import net.bitnine.agens.spark.Agens.{schemaE, schemaV}
@@ -11,7 +11,8 @@ import org.apache.log4j.Logger
 import org.apache.spark.sql.functions.{col, explode}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.opencypher.okapi.api.graph.{CypherResult, GraphName, Node, PropertyGraph, Relationship}
+import org.opencypher.okapi.api.graph.{CypherResult, GraphName, Namespace, Node, PropertyGraph, Relationship}
+import org.opencypher.okapi.api.io.PropertyGraphDataSource
 import org.opencypher.okapi.impl.graph.CypherCatalog
 import org.opencypher.okapi.relational.api.planning.RelationalCypherResult
 
@@ -63,9 +64,12 @@ spark-submit --executor-memory 1g \
 class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
 
 	private val LOG: Logger = Logger.getLogger(this.getClass.getCanonicalName)
+	require(spark != null, "Spark session must be given before using AgensSparkConnector")
 
 	implicit private val meta: AgensMeta = AgensMeta(conf)
+	require(meta != null, "Fail to meta scan about AgensGraph. Check elasticsearch config")
 
+	spark.sparkContext.setLogLevel("error")
 	implicit private val session: CAPSSession = CAPSSession.create(spark)
 
 	implicit val catalog:CypherCatalog = session.catalog
@@ -116,6 +120,45 @@ class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
 	def sql(query: String): DataFrame = {
 		if( this.session == null ) null
 		this.session.sparkSession.sql(query)
+	}
+
+	///////////////////////////////////////
+
+	// for Multi-graph
+	def registerSource(namespace: Namespace, dataSource: PropertyGraphDataSource): Unit =
+		this.session.registerSource(namespace, dataSource)
+
+	// for FSGraphSource
+	def fsGraphsource(rootPath: String,
+					  hiveDatabaseName: Option[String] = None,
+					  filesPerTable: Option[Int] = Some(1)) = {
+		FSGraphSources(rootPath, hiveDatabaseName, filesPerTable)
+	}
+
+	// by Parquet format
+	def saveToHive(graphSource: PropertyGraph, gName: String, dbPath: String="agens"): Unit = {
+		this.session.sparkSession.sql(s"CREATE DATABASE IF NOT EXISTS $dbPath")
+
+		val graphName = GraphName( gName )
+		val graph = graphSource.asCaps		// RelationalCypherGraph[DataFrameTable]
+		val schema = graphSource.schema		// Schema
+
+		val nodeWrites = schema.labelCombinations.combos.map { combo =>
+			val nodeType = combo.toList.sorted.mkString("_")		// multi-label 이라서?
+			val tableName = HiveTableName(dbPath, graphName, Node, Set(nodeType.toLowerCase))
+			val df = graph.canonicalNodeTable(combo)
+			df.write.mode("overwrite").saveAsTable(tableName)
+			tableName
+		}
+		val relWrites = schema.relationshipTypes.map { relType =>
+			val tableName = HiveTableName(dbPath, graphName, Relationship, Set(relType.toLowerCase))
+			val df = graph.canonicalRelationshipTable(relType)
+			df.write.mode("overwrite").saveAsTable(tableName)
+			tableName
+		}
+		// for DEBUG
+		println(s"** Vertices: $nodeWrites")
+		println(s"** Edges: $relWrites")
 	}
 
 	///////////////////////////////////////

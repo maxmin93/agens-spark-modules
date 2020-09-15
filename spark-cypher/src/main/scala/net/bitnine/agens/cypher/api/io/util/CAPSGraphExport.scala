@@ -50,8 +50,10 @@ object CAPSGraphExport {
 
       val idRenaming = header.column(v) -> GraphEntity.sourceIdKey
       val properties: Set[Property] = header.propertiesFor(v)
-      // ex) col[A] -> col[property_A]
-      val propertyRenamings = properties.map { p => header.column(p) -> p.key.name.toLowerCase }  // .toPropertyColumnName }
+
+      val propertyRenamings = properties.map { p =>
+        header.column(p) -> p.key.name.toLowerCase
+      }  // .toPropertyColumnName }     // ex) col[A] -> col[property_A]
       val selectColumns = (idRenaming :: propertyRenamings.toList.sortBy(_._2)).map {
         case (oldName, newName) => nodeRecords.table.df.col(oldName).as(newName)
       }
@@ -69,8 +71,10 @@ object CAPSGraphExport {
       val sourceIdRenaming = header.column(header.startNodeFor(v)) -> Relationship.sourceStartNodeKey
       val targetIdRenaming = header.column(header.endNodeFor(v)) -> Relationship.sourceEndNodeKey
       val properties: Set[Property] = relRecords.header.propertiesFor(v)
-      // ex) col[A] -> col[property_A]
-      val propertyRenamings = properties.map { p => relRecords.header.column(p) -> p.key.name.toLowerCase }   // toPropertyColumnName }
+
+      val propertyRenamings = properties.map { p =>
+        relRecords.header.column(p) -> p.key.name.toLowerCase
+      }   // toPropertyColumnName }     // ex) col[A] -> col[property_A]
       val selectColumns = (idRenaming :: sourceIdRenaming :: targetIdRenaming :: propertyRenamings.toList.sorted).map {
         case (oldName, newName) => relRecords.table.df.col(oldName).as(newName)
       }

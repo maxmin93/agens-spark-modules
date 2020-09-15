@@ -12,43 +12,39 @@ object SaveToHiveExample extends App {
 
 	private val LOG: Logger = Logger.getLogger(this.getClass.getCanonicalName)
 
+	// given after spark start
 	val JOB_NAME: String = "SaveToHiveExample"
 	val spark: SparkSession = SparkSession.builder().appName(JOB_NAME).getOrCreate()
 
 	//////////////////////////////////
 
-	val agens = AgensBuilder.default()
+	// create agens session
+	val agens = AgensBuilder(spark)
+			.host("minmac")
+			.port("29200")
+			.user("elastic")
+			.password("bitnine")
+			.vertexIndex("agensvertex")
+			.edgeIndex("agensedge")
+			.build
+
+	// set datasource value
 	val datasource = "modern"
 
-	agens.sql(s"DROP DATABASE IF EXISTS $datasource CASCADE")
-	agens.sql(s"CREATE DATABASE IF NOT EXISTS $datasource")
+	//////////////////////////////////
+
+	// for hive connected with spark
+	val dbPath = "agens"
+	agens.sql(s"DROP DATABASE IF EXISTS $dbPath CASCADE")
 	agens.sql("show databases").show
 
 	//////////////////////////////////
 
 	val graphModern = agens.graph(datasource)
 
-	val graphName = GraphName( datasource )
-	val graph = graphModern.asCaps
-	val schema = graphModern.schema
+	agens.saveToHive(graphModern, datasource, dbPath)
 
-	val nodeWrites = schema.labelCombinations.combos.map { combo =>
-		val nodeType = combo.toList.sorted.mkString("_")		// multi-label 이라서?
-		val tableName = HiveTableName(datasource, graphName, Node, Set(nodeType.toLowerCase))
-		val df = graph.canonicalNodeTable(combo)
-		df.write.mode("overwrite").saveAsTable(tableName)
-		tableName
-	}
-	val relWrites = schema.relationshipTypes.map { relType =>
-		val tableName = HiveTableName(datasource, graphName, Relationship, Set(relType.toLowerCase))
-		val df = graph.canonicalRelationshipTable(relType)
-		df.write.mode("overwrite").saveAsTable(tableName)
-		tableName
-	}
-	println(s"** nodeWrites: $nodeWrites")
-	println(s"** relWrites: $relWrites")
-
-	agens.sql(s"show tables in ${datasource}").show
+	agens.sql(s"show tables in $dbPath").show
 }
 
 /*

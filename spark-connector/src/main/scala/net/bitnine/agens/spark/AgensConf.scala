@@ -3,8 +3,8 @@ package net.bitnine.agens.spark
 case class AgensConf(
 		var host: String = "localhost",
 		var port: String = "9200",				// Int = 9200,
-		var user: String = "",
-		var password: String = "",
+		var user: String = "",					// default: elastic
+		var password: String = "",				// default: changeme
 		var vertexIndex: String = "agensvertex",
 		var edgeIndex: String = "agensedge"
 ) {
