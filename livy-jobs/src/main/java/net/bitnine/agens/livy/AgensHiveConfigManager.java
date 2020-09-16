@@ -10,7 +10,7 @@ import java.util.Properties;
 // **참고 : hive-jdbc-storage-handler
 public class AgensHiveConfigManager {
 
-    public static final String CONFIG_PREFIX = "agens.graph";
+    public static final String CONFIG_PREFIX = "agens.query";
     private static final EnumSet<AgensHiveConfig> DEFAULT_REQUIRED_PROPERTIES = EnumSet.of(
                     AgensHiveConfig.LIVY_URL,
                     AgensHiveConfig.DATASOURCE,

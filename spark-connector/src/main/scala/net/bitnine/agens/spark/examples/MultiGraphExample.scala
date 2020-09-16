@@ -80,7 +80,7 @@ object MultiGraphExample extends App {
 	recommendations.show
 
 	// future 처리가 필요하지 않나?
-	agens.saveResultToAvro(recommendations, "recommendations")
+	agens.saveResultAsAvro(recommendations, "recommendations")
 
 }
 /*

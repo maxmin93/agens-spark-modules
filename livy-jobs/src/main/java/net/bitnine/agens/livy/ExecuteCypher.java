@@ -22,10 +22,12 @@ public class ExecuteCypher {
 
     public static String runCypher(Map<String,String> parameters) throws AgensLivyJobException {
 
+        // parameter: agens.query.livy
         URI livyUri = convertURI(parameters.get(AgensHiveConfig.LIVY_URL.fullName()));
         if( livyUri == null )
             throw new AgensLivyJobException("Wrong livy URI: "+parameters.get(AgensHiveConfig.LIVY_URL.fullName()));
 
+        // connect to livy server with livyUri
         LivyClient client;
         try {
             client = new LivyClientBuilder()
@@ -37,9 +39,11 @@ public class ExecuteCypher {
             throw new AgensLivyJobException("Fail: livyClient connect", ex.getCause());
         }
 
+        // result = schema of saved avro data
         String schemaJson = null;
         try {
-            schemaJson = client.submit(new net.bitnine.agens.livy.jobs.AvroWriteJob()).get();
+            // parameters(3): agens.query.datasource, agens.query.name, agens.query.query
+            schemaJson = client.submit(new net.bitnine.agens.livy.jobs.CypherJob(parameters)).get();
         } catch (Exception ex){
             throw new AgensLivyJobException("Fail: livyClient.submit", ex.getCause());
         } finally {

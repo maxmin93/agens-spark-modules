@@ -1,12 +1,13 @@
 package net.bitnine.agens.livy.jobs
 
 import net.bitnine.agens.livy.AgensHiveConfig
-import net.bitnine.agens.livy.ExecuteCypher.convertURI
-import net.bitnine.agens.spark.Agens
+import net.bitnine.agens.spark.Agens.ResultsAsDF
+import net.bitnine.agens.spark.{Agens, AgensBuilder}
 import net.bitnine.agens.spark.avro.SchemaConverters
 import org.apache.avro.SchemaBuilder
 import org.apache.livy.{Job, JobContext}
 import org.apache.spark.sql.SparkSession
+import org.opencypher.okapi.api.graph.PropertyGraph
 
 class CypherJob(parameters: java.util.Map[java.lang.String,java.lang.String]) extends Job[java.lang.String] {
 
@@ -17,19 +18,43 @@ class CypherJob(parameters: java.util.Map[java.lang.String,java.lang.String]) ex
 	override def call(jc: JobContext): java.lang.String = {
 
 		val spark: SparkSession = jc.sparkSession()
-		import spark.sqlContext.implicits._
+		println("** parameters")
+		println(s"- datasource: $datasource")
+		println(s"- datasource: $datasource")
+		println(s"- datasource: $datasource")
+		//////////////////////////////////
+		// 1) spark-connector : connect to elasticsearch
 
-		val agens:Agens = AgensBuilder
-				.session(spark)
-				.datasource(datasource)
-				// agens.warehouse.path		// .warehouse("/user/agens/temp")
+		// **NOTE: AgensConf must be set by spark-default.conf
+		val agens:Agens = AgensBuilder(spark)
+				.host("minmac")
+				.port("29200")
+				.user("elastic")
+				.password("bitnine")
+				.vertexIndex("agensvertex")
+				.edgeIndex("agensedge")
+				.build
 
-		val result = agens.cypher(query)
-		val df = result.saveAsAvro(name)
+		//////////////////////////////////
+		// 2) spark-cypher : run query
 
-		val dataSchema = df.schema
+		val graph:PropertyGraph = agens.graph(datasource)
+
+		// query: {name, age}, {name, country}
+		println("\n** query => "+query)
+		val result = graph.cypher(query)
+		result.show
+
+		// save to '/user/agens/temp' as avro
+		println("\n** tempPath ==> "+ agens.conf.tempPath)
+		agens.saveResultAsAvro(result, name)
+
+		//////////////////////////////////
+		// 3) convert schema of result to avro schema
+
+		val df = result.asDataFrame
 		val build = SchemaBuilder.record(name).namespace(SchemaConverters.AGENS_AVRO_NAMESPACE)
-		val avroSchema = SchemaConverters.convertStructToAvro(dataSchema, build, SchemaConverters.AGENS_AVRO_NAMESPACE)
+		val avroSchema = SchemaConverters.convertStructToAvro(df.schema, build, SchemaConverters.AGENS_AVRO_NAMESPACE)
 
 		avroSchema.toString
 	}

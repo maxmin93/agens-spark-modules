@@ -56,11 +56,6 @@
     </dependency>
 
     <!-- Livy -->
-    <!-- dependency>
-      <groupId>org.apache.livy</groupId>
-      <artifactId>livy-api</artifactId>
-      <version>${livy.version}</version>
-    </dependency -->
     <dependency>
       <groupId>org.apache.livy</groupId>
       <artifactId>livy-client-http</artifactId>
@@ -72,6 +67,12 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${scala.binary.version}</artifactId>
+      <version>3.2.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

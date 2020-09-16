@@ -33,6 +33,7 @@
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- Spark -->
@@ -40,18 +41,19 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_${scala.binary.version}</artifactId>
       <version>${spark.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_${scala.binary.version}</artifactId>
+      <version>${spark.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-avro_${scala.binary.version}</artifactId>
       <version>${spark.version}</version>
       <!-- jar download => https://repo1.maven.org/maven2/org/apache/spark/spark-avro_2.11/2.4.6/spark-avro_2.11-2.4.6.jar -->
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql_${scala.binary.version}</artifactId>
-      <version>${spark.version}</version>
-      <!-- scope>provided</scope -->
     </dependency>
 
     <!-- Livy -->
@@ -66,7 +68,7 @@
       <groupId>net.bitnine.agens</groupId>
       <artifactId>spark-connector</artifactId>
       <version>${project.version}</version>
-      <!-- scope>provided</scope -->
+      <scope>provided</scope>
     </dependency>
 
     <!-- Test -->
@@ -77,10 +79,10 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.jetbrains</groupId>
-      <artifactId>annotations</artifactId>
-      <version>RELEASE</version>
-      <scope>compile</scope>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${scala.binary.version}</artifactId>
+      <version>3.2.2</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -150,7 +152,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>net.bitnine.agens.livy.App</mainClass>
+                <mainClass>net.bitnine.agens.livy.ExecuteCypher</mainClass>
                 <addClasspath>true</addClasspath>
               </manifest>
             </archive>
@@ -164,7 +166,7 @@
             <appendAssemblyId>false</appendAssemblyId>
             <archive>
               <manifest>
-                <mainClass>net.bitnine.agens.livy.App</mainClass>
+                <mainClass>net.bitnine.agens.livy.ExecuteCypher</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>
@@ -181,15 +183,48 @@
             </execution>
           </executions>
         </plugin>
-
-        <!-- plugin>
-          <artifactId>maven-install-plugin</artifactId>
-          <version>2.5.2</version>
-        </plugin>
         <plugin>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>2.8.2</version>
-        </plugin -->
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>3.0.0</version>
+          <executions>
+            <!-- TASK #1 -->
+            <execution>
+              <id>copy full-jar to remote</id>
+              <phase>pre-integration-test</phase>
+              <configuration>
+                <target>
+                  <exec executable="scp">
+                    <arg value="target/agens-${project.artifactId}-${project.version}.jar" />
+                    <arg value="bgmin@mymac:~/Servers/extraJars" />
+                  </exec>
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+            <!-- TASK #2 -->
+            <execution>
+              <id>upload full-jar to hdfs</id>
+              <phase>pre-integration-test</phase>
+              <configuration>
+                <target>
+                  <exec executable="hdfs">
+                    <arg value="dfs" />
+                    <arg value="-put" />
+                    <arg value="-f" />
+                    <arg value="target/agens-${project.artifactId}-${project.version}.jar" />
+                    <arg value="/user/agens/lib" />
+                  </exec>
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
   </build>
 </project>

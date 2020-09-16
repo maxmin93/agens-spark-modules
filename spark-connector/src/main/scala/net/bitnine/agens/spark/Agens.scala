@@ -55,27 +55,67 @@ object Agens extends Serializable {
 
 	def main(args: Array[String]): Unit = {
 
-		// val agens = AgensBuilder(spark).build
-		val agens = AgensBuilder.default()
+		var query = "FROM GRAPH modern " +
+					"MATCH (p:person {country:'USA'})-[e:knows]-(t:person) " +
+					"WHERE p.age < 35 " +
+					"RETURN p.name, p.age, t.name, t.country, e.id_, e.src, e.dst"
+		if( args.length > 0 ) query = args(0)
+
+		var saveName = "test_query01"
+		if( args.length > 1 ) saveName = args(1)
+
+		val JOB_NAME: String = "Agens.main"
+		val spark: SparkSession = SparkSession.builder().appName(JOB_NAME).getOrCreate()
+
+		//////////////////////////////////
+
+		val agens = AgensBuilder(spark)
+				.host("minmac")
+				.port("29200")
+				.user("elastic")
+				.password("bitnine")
+				.vertexIndex("agensvertex")
+				.edgeIndex("agensedge")
+				.build
 		val datasource = "modern"
 
-		val size = agens.count(datasource)
-		val meta = agens.meta.datasource(datasource)
+		//////////////////////////////////
 
 		val graphModern = agens.graph(datasource)
 
+		// default namespace: session
+		agens.catalog.store("modern", graphModern)
+		println("\n** [start] graphs: "+agens.catalog.graphNames.map(_.graphName).mkString("[","],[","]"))
+		// start ==> graphs: [emptyGraph],[modern]
+
+		// vertices: id, label
+		val result1 = agens.cypher("FROM GRAPH session.modern MATCH (n) RETURN n.id_, n.label")
+		result1.show
+		// **NOTE: edge 양방향 탐색이라 distinct 해 주어야 중복 안됨
+		// edges: id, label, source, target
+		val result2 = agens.cypher("FROM GRAPH session.modern MATCH ()-[e]-() RETURN distinct e.id_, e.label, e.src, e.dst")
+		result2.show
+
+		// query: {name, age}, {name, country}
+		println("\n** query => "+query)
+		val result3 = agens.cypher(query)
+		result3.show
+
+		// save to '/user/agens/temp' as avro
+		println("\n** tempPath ==> "+ agens.conf.tempPath)
+		agens.saveResultAsAvro(result3, saveName)
 	}
 
 }
-
 /*
 spark-submit --executor-memory 1g \
 	--master spark://minmac:7077 \
 	--class net.bitnine.agens.spark.Agens \
 	target/agens-spark-connector-1.0-dev.jar
+
 */
 
-class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
+class Agens(spark: SparkSession, val conf: AgensConf) extends Serializable {
 
 	private val LOG: Logger = Logger.getLogger(this.getClass.getCanonicalName)
 	require(spark != null, "Spark session must be given before using AgensSparkConnector")
@@ -88,8 +128,9 @@ class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
 
 	implicit val catalog:CypherCatalog = session.catalog
 
-	val emptyDf = this.spark.createDataFrame(this.spark.sparkContext.emptyRDD[Row], schemaV)
+	// val emptyDf = this.spark.createDataFrame(this.spark.sparkContext.emptyRDD[Row], schemaV)
 	val emptyGraph = this.catalog.graph("emptyGraph")
+	require(emptyGraph != null, "Fail to initializing CAPSSession and not found emptyGraph")
 
 	///////////////////////////////////////
 
@@ -176,11 +217,11 @@ class Agens(spark: SparkSession, conf: AgensConf) extends Serializable {
 		println(s"** Edges: $relWrites")
 	}
 
-	def saveResultToAvro(result: CypherResult, saveName: String): Unit = {
+	def saveResultAsAvro(result: CypherResult, saveName: String): Unit = {
 		val df = result.records.asDataFrame
 		val tempPath =  if( this.conf.tempPath.endsWith("/") ) this.conf.tempPath + saveName
 						else this.conf.tempPath + "/" + saveName
-		println("saveResultToAvro: "+tempPath)
+		println("saveResultAsAvro: "+tempPath)
 		df.write.mode(SaveMode.Overwrite).format("avro").save(tempPath)
 	}
 

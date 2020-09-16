@@ -49,7 +49,8 @@ object AgensHelper {
 
 	//////////////////////////////////////////////
 
-	val propertyIdentityChar = "$"
+	// **NOTE: convDf 의 withColumn 에서 제거 ==> 원본 컬럼 name 그대로 사용
+	// val propertyIdentityChar = "_"
 
 	def explodeVertex(df: DataFrame, datasource:String, label:String)(implicit meta: AgensMeta): DataFrame = {
 		val metaLabel = meta.datasource(datasource).vlabel(label)
@@ -60,7 +61,8 @@ object AgensHelper {
 			col("timestamp"),
 			col("datasource"),
 			col("label"),
-			col("id")
+			col("id"),
+			col("id").as("id_")		// preservation
 		)
 
 		// STEP1: explode nested array field about properties
@@ -77,7 +79,7 @@ object AgensHelper {
 		metaLabel.properties.values.foreach { p:meta.MetaProperty =>
 			val df = tmpDf.filter(col("property.key") === p.name)
 					.withColumn("tmp$", col("property.value"))
-			val convDf = df.withColumn( p.name+propertyIdentityChar, col("tmp$").cast(p.dataType()) )
+			val convDf = df.withColumn( p.name, col("tmp$").cast(p.dataType()) )
 					.drop( col("property") ).drop(col("tmp$"))
 			baseDf = baseDf.join(convDf, baseCols,"left")
 		}
@@ -95,7 +97,10 @@ object AgensHelper {
 			col("label"),
 			col("id"),
 			col("src").as("source"),
-			col("dst").as("target")
+			col("dst").as("target"),
+			col("id").as("id_"),		// preservation
+			col("src"),							// preservation
+			col("dst")							// preservation
 		)
 
 		// STEP1: explode nested array field about properties
@@ -114,7 +119,7 @@ object AgensHelper {
 		metaLabel.properties.values.foreach { p:meta.MetaProperty =>
 			val df = tmpDf.filter(col("property.key") === p.name)
 					.withColumn("tmp$", col("property.value"))
-			val convDf = df.withColumn( p.name+propertyIdentityChar, col("tmp$").cast(p.dataType()) )
+			val convDf = df.withColumn( p.name, col("tmp$").cast(p.dataType()) )
 					.drop( col("property") ).drop(col("tmp$"))
 			baseDf = baseDf.join(convDf, baseCols,"left")
 		}
