@@ -1,4 +1,4 @@
-package net.bitnine.agens.livy;
+package net.bitnine.agens.livy.util;
 
 public class AgensLivyJobException extends Exception {
 

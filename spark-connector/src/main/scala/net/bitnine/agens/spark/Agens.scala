@@ -4,14 +4,15 @@ import net.bitnine.agens.cypher.api.{CAPSSession, FSGraphSources}
 import net.bitnine.agens.cypher.api.CAPSSession._
 import net.bitnine.agens.cypher.api.io.util.CAPSGraphExport.CanonicalTableExport
 import net.bitnine.agens.cypher.api.io.util.HiveTableName
-import net.bitnine.agens.spark.Agens.{schemaE, schemaV}
-import net.bitnine.agens.cypher.api.io.{CAPSEntityTable, CAPSNodeTable, CAPSRelationshipTable}
+import net.bitnine.agens.cypher.api.io.CAPSEntityTable
 import net.bitnine.agens.cypher.impl.CAPSConverters.RichPropertyGraph
 import net.bitnine.agens.cypher.impl.CAPSRecords
+import net.bitnine.agens.spark.Agens.{schemaE, schemaV}
 import net.bitnine.agens.spark.AgensHelper.{explodeEdge, explodeVertex, wrappedEdgeTable, wrappedVertexTable}
+
 import org.apache.log4j.Logger
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import org.opencypher.okapi.api.graph.{CypherResult, GraphName, Namespace, Node, PropertyGraph, Relationship}
 import org.opencypher.okapi.api.io.PropertyGraphDataSource
 import org.opencypher.okapi.impl.exception.UnsupportedOperationException
@@ -217,12 +218,13 @@ class Agens(spark: SparkSession, val conf: AgensConf) extends Serializable {
 		println(s"** Edges: $relWrites")
 	}
 
-	def saveResultAsAvro(result: CypherResult, saveName: String): Unit = {
+	def saveResultAsAvro(result: CypherResult, saveName: String): String = {
 		val df = result.records.asDataFrame
 		val tempPath =  if( this.conf.tempPath.endsWith("/") ) this.conf.tempPath + saveName
 						else this.conf.tempPath + "/" + saveName
 		println("saveResultAsAvro: "+tempPath)
 		df.write.mode(SaveMode.Overwrite).format("avro").save(tempPath)
+		tempPath
 	}
 
 	///////////////////////////////////////

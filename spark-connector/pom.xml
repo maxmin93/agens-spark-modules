@@ -50,12 +50,6 @@
       <version>${scala.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-reflect</artifactId>
-      <version>${scala.version}</version>
-      <scope>provided</scope>
-    </dependency>
 
     <!-- Spark (not included) -->
     <dependency>
@@ -83,13 +77,6 @@
       <version>${spark.version}</version>
       <scope>provided</scope>
     </dependency>
-
-    <!-- Livy : remote spark job by REST API-->
-    <!-- dependency>
-      <groupId>org.apache.livy</groupId>
-      <artifactId>livy-client-http</artifactId>
-      <version>${livy.version}</version>
-    </dependency -->
 
     <!-- ElasticSearch Spark Library (not included)-->
     <dependency>
@@ -132,10 +119,23 @@
       <groupId>net.bitnine.agens</groupId>
       <artifactId>spark-cypher</artifactId>
       <version>${project.version}</version>
-<!--      <scope>provided</scope>-->
-<!--      <scope>system</scope>-->
-<!--      <systemPath>${project.basedir}/lib/agens-spark-cypher-${project.version}.jar</systemPath>-->
     </dependency>
+    <!-- for hive-storage-handler using livy-server -->
+    <!-- dependency>
+      <groupId>net.bitnine.agens</groupId>
+      <artifactId>livy-jobs</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-avro_${scala.binary.version}</artifactId>
+      <version>${spark.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.livy</groupId>
+      <artifactId>livy-api</artifactId>
+      <version>${livy.version}</version>
+    </dependency -->
 
     <!-- TEST -->
     <dependency>

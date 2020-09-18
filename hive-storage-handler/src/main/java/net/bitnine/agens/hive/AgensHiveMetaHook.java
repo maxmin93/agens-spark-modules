@@ -18,6 +18,8 @@ import org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat;
 
 import java.util.*;
 
+import static net.bitnine.agens.livy.AgensHiveConfigManager.checkRequiredPropertiesAreDefined;
+
 public class AgensHiveMetaHook implements HiveMetaHook {
 
     public static final Log LOG = LogFactory.getLog(AgensHiveMetaHook.class);
@@ -32,11 +34,12 @@ public class AgensHiveMetaHook implements HiveMetaHook {
     public void preCreateTable(Table table) throws MetaException {
 
         // Check all mandatory table properties
-        for (String property : AgensHiveConstants.MANDATORY_TABLE_PROPERTIES) {
-            if (Strings.isNullOrEmpty(table.getParameters().get(property))) {
-                throw new MetaException(property + " table property cannot be empty.");
-            }
-        }
+//        for (String property : AgensHiveConstants.MANDATORY_TABLE_PROPERTIES) {
+//            if (Strings.isNullOrEmpty(table.getParameters().get(property))) {
+//                throw new MetaException(property + " table property cannot be empty.");
+//            }
+//        }
+        checkRequiredPropertiesAreDefined(table.getParameters());
 
         if(!Strings.isNullOrEmpty(table.getSd().getLocation())) {
             throw new MetaException("Cannot create table in BigQuery with Location property.");

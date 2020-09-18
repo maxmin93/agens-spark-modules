@@ -1,4 +1,4 @@
-package net.bitnine.agens.livy;
+package net.bitnine.agens.hive;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -11,11 +11,11 @@ import java.util.Properties;
 public class AgensHiveConfigManager {
 
     public static final String CONFIG_PREFIX = "agens.query";
-    private static final EnumSet<AgensHiveConfig> DEFAULT_REQUIRED_PROPERTIES = EnumSet.of(
-                    AgensHiveConfig.LIVY_URL,
-                    AgensHiveConfig.DATASOURCE,
-                    AgensHiveConfig.NAME,
-                    AgensHiveConfig.QUERY
+    private static final EnumSet<net.bitnine.agens.livy.AgensHiveConfig> DEFAULT_REQUIRED_PROPERTIES = EnumSet.of(
+                    net.bitnine.agens.livy.AgensHiveConfig.LIVY_URL,
+                    net.bitnine.agens.livy.AgensHiveConfig.DATASOURCE,
+                    net.bitnine.agens.livy.AgensHiveConfig.NAME,
+                    net.bitnine.agens.livy.AgensHiveConfig.QUERY
     );
 
     private AgensHiveConfigManager() {
@@ -40,7 +40,7 @@ public class AgensHiveConfigManager {
     }
 
     private static void checkRequiredPropertiesAreDefined(Properties props) {
-        for (AgensHiveConfig configKey : DEFAULT_REQUIRED_PROPERTIES) {
+        for (net.bitnine.agens.livy.AgensHiveConfig configKey : DEFAULT_REQUIRED_PROPERTIES) {
             String propertyKey = configKey.fullName();
             if ((props == null) || (!props.containsKey(propertyKey)) || (isEmptyString(props.getProperty(propertyKey)))) {
                 throw new IllegalArgumentException("Property " + propertyKey + " is required.");
@@ -49,7 +49,7 @@ public class AgensHiveConfigManager {
     }
 
 
-    public static String getConfigValue(AgensHiveConfig key, Configuration config) {
+    public static String getConfigValue(net.bitnine.agens.livy.AgensHiveConfig key, Configuration config) {
         return config.get(key.fullName());
     }
 

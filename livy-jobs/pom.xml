@@ -49,11 +49,11 @@
       <version>${spark.version}</version>
       <scope>provided</scope>
     </dependency>
+    <!-- jar download => https://repo1.maven.org/maven2/org/apache/spark/spark-avro_2.11/2.4.6/spark-avro_2.11-2.4.6.jar -->
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-avro_${scala.binary.version}</artifactId>
       <version>${spark.version}</version>
-      <!-- jar download => https://repo1.maven.org/maven2/org/apache/spark/spark-avro_2.11/2.4.6/spark-avro_2.11-2.4.6.jar -->
     </dependency>
 
     <!-- Livy -->
@@ -152,7 +152,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>net.bitnine.agens.livy.ExecuteCypher</mainClass>
+                <mainClass>net.bitnine.agens.livy.RunCypherJob</mainClass>
                 <addClasspath>true</addClasspath>
               </manifest>
             </archive>
@@ -166,7 +166,7 @@
             <appendAssemblyId>false</appendAssemblyId>
             <archive>
               <manifest>
-                <mainClass>net.bitnine.agens.livy.ExecuteCypher</mainClass>
+                <mainClass>net.bitnine.agens.livy.RunCypherJob</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>

@@ -1,4 +1,4 @@
-package net.bitnine.agens.livytest;
+package net.bitnine.agens.livy.app;
 
 /**
  * Hello world!

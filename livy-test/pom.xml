@@ -41,12 +41,7 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_${scala.binary.version}</artifactId>
       <version>${spark.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-avro_${scala.binary.version}</artifactId>
-      <version>${spark.version}</version>
-      <!-- jar download => https://repo1.maven.org/maven2/org/apache/spark/spark-avro_2.11/2.4.6/spark-avro_2.11-2.4.6.jar -->
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -55,11 +50,23 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- Livy -->
     <dependency>
-      <groupId>org.apache.livy</groupId>
-      <artifactId>livy-client-http</artifactId>
-      <version>${livy.version}</version>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.30</version>
+    </dependency>
+
+    <!-- agens-spark-connector with scala 2.11 -->
+    <dependency>
+      <groupId>net.bitnine.agens</groupId>
+      <artifactId>spark-connector</artifactId>
+      <version>${project.version}</version>
+      <!-- scope>provided</scope -->
+    </dependency>
+    <dependency>
+      <groupId>net.bitnine.agens</groupId>
+      <artifactId>livy-jobs</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- Test -->
@@ -143,7 +150,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>net.bitnine.agens.livytest.App</mainClass>
+                <mainClass>net.bitnine.agens.livy.app.App</mainClass>
                 <addClasspath>true</addClasspath>
               </manifest>
             </archive>
@@ -157,7 +164,7 @@
             <appendAssemblyId>false</appendAssemblyId>
             <archive>
               <manifest>
-                <mainClass>net.bitnine.agens.livytest.App</mainClass>
+                <mainClass>net.bitnine.agens.livy.app.App</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>

@@ -1,4 +1,4 @@
-package net.bitnine.agens.livy;
+package net.bitnine.agens.hive;
 
 // **참고 : hive-jdbc-storage-handler
 public enum AgensHiveConfig {

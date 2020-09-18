@@ -1,24 +1,18 @@
-package net.bitnine.agens.livytest.scala
+package net.bitnine.agens.livy.job
 
-import net.bitnine.agens.livytest.avro.SchemaConverters
-import org.apache.avro.{Schema, SchemaBuilder}
-import org.apache.avro.SchemaBuilder.FieldAssembler
+import net.bitnine.agens.livy.util.SchemaConverters
+import org.apache.avro.SchemaBuilder
 import org.apache.livy.{Job, JobContext}
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{SaveMode, SparkSession}
 
-import scala.collection.JavaConverters._
+class AvroWriteJob(val name: java.lang.String) extends Job[java.lang.String] {
 
-class AvroWriteJob extends Job[Schema] {
-	override def call(jc: JobContext): Schema = {
-//class AvroWriteJob extends Job[java.util.List[Schema.Field]] {
-//	override def call(jc: JobContext): java.util.List[Schema.Field] = {
-//class AvroWriteJob extends Job[java.lang.String] {
-//	override def call(jc: JobContext): java.lang.String = {
-
+	override def call(jc: JobContext): java.lang.String = {
 		val spark: SparkSession = jc.sparkSession()
-		import spark.sqlContext.implicits._
+		callScala(spark)
+	}
 
+	def callScala(spark: SparkSession): java.lang.String = {
 		val columns = Seq("firstname", "middlename", "lastname", "dob_year", "dob_month", "gender", "salary")
 		val data = Seq(("James ","","Smith",2018,1,"M",3000),
 			("Michael ","Rose","",2010,3,"M",4000),
@@ -27,23 +21,22 @@ class AvroWriteJob extends Job[Schema] {
 			("Jen","Mary","Brown",2010,7,"",-1)
 		)
 
+		import spark.sqlContext.implicits._
 		val df = data.toDF(columns:_*)
+
 		df.write.mode(SaveMode.Overwrite)
 				//.partitionBy("dob_year")
 				.format("avro")
-				.save("/user/agens/temp/person.avro")
+				.save(s"/user/agens/temp/$name.avro")
 
 		val dataSchema = df.schema
-		val options: Map[String, String] = Map("recordName"->"avro_person", "recordNamespace"->"net.bitnine.agens.hive")
+		val options: Map[String, String] = Map("recordName"->s"avro_$name", "recordNamespace"->"net.bitnine.agens.hive")
 		val recordName = options.getOrElse("recordName", "topLevelRecord")
 		val recordNamespace = options.getOrElse("recordNamespace", "")
 		val build = SchemaBuilder.record(recordName).namespace(recordNamespace)
 		val outputAvroSchema = SchemaConverters.convertStructToAvro(dataSchema, build, recordNamespace)
-//		outputAvroSchema.toString(true)
 
-		// outputAvroSchema.getFields.asScala.map(_.schema().toString).mkString("[", "],\n[", "]")
-		// outputAvroSchema.getFields
-		outputAvroSchema
+		outputAvroSchema.toString(true)
 	}
 
 }

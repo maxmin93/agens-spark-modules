@@ -1,23 +1,23 @@
-package net.bitnine.agens.livytest.avro
+package net.bitnine.agens.livy.util
 
 import java.nio.ByteBuffer
 
-import scala.collection.JavaConverters._
-
-import org.apache.avro.generic.GenericFixed
-import org.apache.avro.generic.{GenericData, GenericRecord}
-import org.apache.avro.{Schema, SchemaBuilder}
-import org.apache.avro.SchemaBuilder._
 import org.apache.avro.Schema.Type._
-
+import org.apache.avro.SchemaBuilder._
+import org.apache.avro.generic.{GenericData, GenericFixed, GenericRecord}
+import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.types._
+
+import scala.collection.JavaConverters._
 
 /**
  * This object contains method that are used to convert sparkSQL schemas to avro schemas and vice
  * versa.
  */
 object SchemaConverters {
+
+	val AGENS_AVRO_NAMESPACE = "net.bitnine.agens.hive"
 
 	class IncompatibleSchemaException(msg: String, ex: Throwable = null) extends Exception(msg, ex)
 

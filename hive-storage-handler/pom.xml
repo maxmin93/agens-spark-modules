@@ -74,6 +74,7 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_${scala.binary.version}</artifactId>
       <version>${spark.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -82,14 +83,7 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- Livy : remote spark job by REST API-->
-    <dependency>
-      <groupId>org.apache.livy</groupId>
-      <artifactId>livy-client-http</artifactId>
-      <version>${livy.version}</version>
-    </dependency>
-
-    <!-- agens-spark-cypher with scala 2.11 -->
+    <!-- agens-livy-jobs included livy-http-client -->
     <dependency>
       <groupId>net.bitnine.agens</groupId>
       <artifactId>livy-jobs</artifactId>
@@ -194,6 +188,23 @@
         <artifactId>maven-antrun-plugin</artifactId>
         <version>3.0.0</version>
         <executions>
+          <!-- TASK #1 -->
+          <execution>
+            <id>copy full-jar to remote</id>
+            <phase>pre-integration-test</phase>
+            <configuration>
+              <target>
+                <exec executable="scp">
+                  <arg value="target/agens-${project.artifactId}-${project.version}.jar" />
+                  <arg value="bgmin@mymac:~/Servers/extraJars" />
+                </exec>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          <!-- TASK #2 -->
           <execution>
             <id>upload full-jar to hdfs</id>
             <phase>pre-integration-test</phase>
