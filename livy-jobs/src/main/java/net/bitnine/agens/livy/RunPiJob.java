@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 public class RunPiJob {
 
     public static Double run(
-            String jarPath,
             String livyUrl,         // ex) http://minmac:8998
             String intVal           // ex) "2"
     ) throws AgensLivyJobException {
@@ -31,11 +30,6 @@ public class RunPiJob {
                     .setConf(SparkLauncher.EXECUTOR_MEMORY, "1G")
                     .setConf("livy.rsc.server.connect.timeout","10s")
                     .build();
-
-            URI jar1Uri = AgensLivyHelper.convertURI(jarPath);
-            client.addJar(jar1Uri);     // agens-spark-connector
-            URI jar2Uri = AgensLivyHelper.convertURI(AgensLivyHelper.livyjobsJarPath);
-            client.addJar(jar2Uri);     // agens-livy-jobs
         }
         catch (Exception ex){
             throw new AgensLivyJobException("Fail: livyClient connect", ex.getCause());
@@ -64,7 +58,7 @@ public class RunPiJob {
         }
         System.out.println("");
 
-        Double result = run(AgensLivyHelper.connectorJarPath, args[0], args[1]);
+        Double result = run(args[0], args[1]);
         System.out.println("result ==>\n"+result);
     }
 }

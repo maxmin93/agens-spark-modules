@@ -61,13 +61,7 @@
       <version>1.7.30</version>
     </dependency>
 
-    <!-- agens-spark-connector with scala 2.11 -->
-    <!-- dependency>
-      <groupId>net.bitnine.agens</groupId>
-      <artifactId>spark-connector</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency -->
+    <!-- Agens -->
     <dependency>
       <groupId>net.bitnine.agens</groupId>
       <artifactId>livy-jobs</artifactId>

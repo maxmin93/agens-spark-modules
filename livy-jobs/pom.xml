@@ -191,7 +191,7 @@
             <!-- TASK #1 -->
             <execution>
               <id>copy full-jar to remote</id>
-              <phase>pre-integration-test</phase>
+              <phase>package</phase>
               <configuration>
                 <target>
                   <exec executable="scp">
@@ -206,6 +206,21 @@
             </execution>
             <!-- TASK #2 -->
             <execution>
+              <id>copy full-jar to local</id>
+              <phase>package</phase>
+              <goals>
+                <goal>run</goal>
+              </goals>
+              <configuration>
+                <target>
+                  <copy todir="/Users/bgmin/Servers/extraJars">
+                    <fileset dir="${basedir}/target" includes="agens-${project.artifactId}-${project.version}.jar" />
+                  </copy>
+                </target>
+              </configuration>
+            </execution>
+            <!-- TASK #3 -->
+            <!-- execution>
               <id>upload full-jar to hdfs</id>
               <phase>pre-integration-test</phase>
               <configuration>
@@ -222,7 +237,7 @@
               <goals>
                 <goal>run</goal>
               </goals>
-            </execution>
+            </execution -->
           </executions>
         </plugin>
       </plugins>

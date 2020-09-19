@@ -17,7 +17,6 @@ public class RunCypherApp {
 
         // options: livyUri, datasource, name, query
         Map<String,String> parameters = new HashMap<>();
-        parameters.put("agens.spark.jar", AgensLivyHelper.connectorJarPath);
         parameters.put("agens.spark.livy", args[0]);
         parameters.put("agens.spark.datasource", args[1]);
         parameters.put("agens.spark.name", args[2]);
@@ -26,7 +25,6 @@ public class RunCypherApp {
         RunCypherJob job = new RunCypherJob();
         try{
             String schemaJson = job.run(
-                    parameters.get("agens.spark.jar"),
                     parameters.get("agens.spark.livy"),
                     parameters.get("agens.spark.datasource"),
                     parameters.get("agens.spark.name"),
@@ -47,8 +45,8 @@ public class RunCypherApp {
 ## ==> 하나 이상의 jar 포함시, linux는 ':', windows는 ';'으로 구분
 
 [spark-defaults.conf]
-spark.driver.extraClassPath     /Users/bgmin/Servers/extraJars/elasticsearch-spark-20_2.11-7.7.1.jar
-spark.executor.extraClassPath   /Users/bgmin/Servers/extraJars/elasticsearch-spark-20_2.11-7.7.1.jar
+spark.driver.extraClassPath     /Users/bgmin/Servers/extraJars/agens-spark-connector-1.0-dev.jar
+spark.executor.extraClassPath   /Users/bgmin/Servers/extraJars/agens-spark-connector-1.0-dev.jar
 
 ============================
 

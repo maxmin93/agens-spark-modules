@@ -86,19 +86,17 @@ Caused by: java.lang.RuntimeException: Multiple ES-Hadoop versions detected in t
 jar:file:/var/folders/9n/5nvp8dkj76s_rns1wv8rwqpc0000gn/T/tmp_sg89u6j/__livy__/agens-spark-connector-1.0-dev.jar
 jar:file:/var/folders/9n/5nvp8dkj76s_rns1wv8rwqpc0000gn/T/rsc-tmp2293220611921267835/__livy__/agens-spark-connector-1.0-dev.jar
 
+[spark-defaults.conf]
+spark.driver.extraClassPath     /Users/bgmin/Servers/extraJars/elasticsearch-spark-20_2.11-7.7.1.jar
+spark.executor.extraClassPath   /Users/bgmin/Servers/extraJars/elasticsearch-spark-20_2.11-7.7.1.jar
+
     -->
     <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch-spark-20_${scala.binary.version}</artifactId>
       <version>${elasticsearch.version}</version>
-      <scope>provided</scope>
+      <!-- scope>provided</scope -->
     </dependency>
-    <!-- dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch-hadoop-hive</artifactId>
-      <version>${elasticsearch.version}</version>
-      <scope>provided</scope>
-    </dependency -->
 
     <!-- elasticsearch -->
     <dependency>
@@ -128,22 +126,6 @@ jar:file:/var/folders/9n/5nvp8dkj76s_rns1wv8rwqpc0000gn/T/rsc-tmp229322061192126
       <artifactId>spark-cypher</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- for hive-storage-handler using livy-server -->
-    <!-- dependency>
-      <groupId>net.bitnine.agens</groupId>
-      <artifactId>livy-jobs</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-avro_${scala.binary.version}</artifactId>
-      <version>${spark.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.livy</groupId>
-      <artifactId>livy-api</artifactId>
-      <version>${livy.version}</version>
-    </dependency -->
 
     <!-- TEST -->
     <dependency>
@@ -254,7 +236,7 @@ jar:file:/var/folders/9n/5nvp8dkj76s_rns1wv8rwqpc0000gn/T/rsc-tmp229322061192126
           <!-- TASK #1 -->
           <execution>
             <id>copy full-jar to remote</id>
-            <phase>pre-integration-test</phase>
+            <phase>package</phase>
             <configuration>
               <target>
                 <exec executable="scp">
@@ -269,6 +251,20 @@ jar:file:/var/folders/9n/5nvp8dkj76s_rns1wv8rwqpc0000gn/T/rsc-tmp229322061192126
           </execution>
           <!-- TASK #2 -->
           <execution>
+            <id>copy full-jar to local</id>
+            <phase>package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <copy todir="/Users/bgmin/Servers/extraJars">
+                  <fileset dir="${basedir}/target" includes="agens-${project.artifactId}-${project.version}.jar" />
+                </copy>
+              </target>
+            </configuration>
+          </execution>
+          <!-- execution>
             <id>upload full-jar to hdfs</id>
             <phase>pre-integration-test</phase>
             <configuration>
@@ -285,7 +281,7 @@ jar:file:/var/folders/9n/5nvp8dkj76s_rns1wv8rwqpc0000gn/T/rsc-tmp229322061192126
             <goals>
               <goal>run</goal>
             </goals>
-          </execution>
+          </execution -->
         </executions>
       </plugin>
     </plugins>

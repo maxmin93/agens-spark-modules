@@ -17,14 +17,12 @@ public class RunAvroWriteApp {
 
         // options: livyUri, datasource, name, query
         Map<String,String> parameters = new HashMap<>();
-        parameters.put("agens.spark.jar", AgensLivyHelper.connectorJarPath);
         parameters.put("agens.spark.livy", args[0]);
         parameters.put("agens.spark.name", args[1]);
 
         RunAvroWriteJob job = new RunAvroWriteJob();
         try{
             String schemaJson = job.run(
-                    parameters.get("agens.spark.jar"),
                     parameters.get("agens.spark.livy"),
                     parameters.get("agens.spark.name")
             );
@@ -39,7 +37,8 @@ public class RunAvroWriteApp {
 }
 
 /*
-java -cp target/agens-livy-test-1.0-dev.jar net.bitnine.agens.livy.app.RunAvroWriteApp http://minmac:8998 person
+java -cp target/agens-livy-test-1.0-dev.jar \
+net.bitnine.agens.livy.app.RunAvroWriteApp http://minmac:8998 person
 -------------------
 RunAvroWriteApp ==>
 {

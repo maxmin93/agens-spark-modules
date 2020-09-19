@@ -12,7 +12,6 @@ import org.apache.livy.*;
 public class RunCypherJob {
 
     public static String run(
-            String jarPath,
             String livyUrl,         // ex) http://minmac:8998
             String datasource,      // ex) modern
             String name,            // person
@@ -31,11 +30,6 @@ public class RunCypherJob {
                     // .setConf(SparkLauncher.EXECUTOR_MEMORY, "1G")
                     .setConf("livy.rsc.server.connect.timeout","10s")
                     .build();
-
-            URI jar1Uri = AgensLivyHelper.convertURI(jarPath);
-            client.addJar(jar1Uri);     // agens-spark-connector
-            URI jar2Uri = AgensLivyHelper.convertURI(AgensLivyHelper.livyjobsJarPath);
-            client.addJar(jar2Uri);     // agens-livy-jobs
         }
         catch (Exception ex){
             throw new AgensLivyJobException("[Fail] livyClient connect: "+ex.getMessage(), ex.getCause());
@@ -64,7 +58,7 @@ public class RunCypherJob {
         System.out.println("");
 
         System.out.println("RunCypherJob.. ");
-        String result = run(AgensLivyHelper.connectorJarPath, args[0], args[1], args[2], args[3]);
+        String result = run(args[0], args[1], args[2], args[3]);
         System.out.println("result ==>\n"+result);
     }
 }

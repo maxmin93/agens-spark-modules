@@ -17,14 +17,12 @@ public class RunPiApp {
 
         // options: livyUri, datasource, name, query
         Map<String,String> parameters = new HashMap<>();
-        parameters.put("agens.spark.jar", AgensLivyHelper.connectorJarPath);
         parameters.put("agens.spark.livy", args[0]);
         parameters.put("agens.spark.value", args[1]);
 
         RunAvroWriteJob job = new RunAvroWriteJob();
         try{
             String schemaJson = job.run(
-                    parameters.get("agens.spark.jar"),
                     parameters.get("agens.spark.livy"),
                     parameters.get("agens.spark.value")
             );
