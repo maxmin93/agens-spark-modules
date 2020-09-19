@@ -143,7 +143,8 @@ class AgensElastic(val conf: AgensConf=null) extends Serializable {
 		val query: String = s"""{ "query": { "bool": {
 							   |  "must": { "term": { "datasource": "${datasource}" } }
 							   |}}}""".stripMargin.replaceAll("\n", " ")
-		spark.read.format("es").options(esConf)
+		spark.read.format("org.elasticsearch.spark.sql")		// == format("es")
+				.options(esConf)
 				.option("es.query", query)
 				.schema(schema)
 				.load(index)
@@ -156,7 +157,8 @@ class AgensElastic(val conf: AgensConf=null) extends Serializable {
 							   |  "must": { "term": { "datasource": "${datasource}" } }
 							   |  "filter": { "terms": { "label": ["${labels.mkString("\",\"")}"] } }
 							   |}}}""".stripMargin.replaceAll("\n", " ")
-		spark.read.format("es").options(esConf)
+		spark.read.format("org.elasticsearch.spark.sql")		// == format("es")
+				.options(esConf)
 				.option("es.query", query)
 				.schema(schema)
 				.load(index)

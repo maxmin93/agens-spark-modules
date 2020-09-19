@@ -79,18 +79,26 @@
     </dependency>
 
     <!-- ElasticSearch Spark Library (not included)-->
+    <!-- ** CAUTION: Multiple ES-Hadoop versions detected in the classpath; please use only one -->
+    <!-- cluster 모드이면 상관없는데, livy 또는 spark-shell 이 remote로 기동될 경우 ES-Hadoop 내장이 필요함
+
+Caused by: java.lang.RuntimeException: Multiple ES-Hadoop versions detected in the classpath; please use only one
+jar:file:/var/folders/9n/5nvp8dkj76s_rns1wv8rwqpc0000gn/T/tmp_sg89u6j/__livy__/agens-spark-connector-1.0-dev.jar
+jar:file:/var/folders/9n/5nvp8dkj76s_rns1wv8rwqpc0000gn/T/rsc-tmp2293220611921267835/__livy__/agens-spark-connector-1.0-dev.jar
+
+    -->
     <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch-spark-20_${scala.binary.version}</artifactId>
       <version>${elasticsearch.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
+    <!-- dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch-hadoop-hive</artifactId>
       <version>${elasticsearch.version}</version>
       <scope>provided</scope>
-    </dependency>
+    </dependency -->
 
     <!-- elasticsearch -->
     <dependency>

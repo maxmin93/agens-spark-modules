@@ -238,7 +238,8 @@ class Agens(spark: SparkSession, val conf: AgensConf) extends Serializable {
 			   |  "must": { "term": { "datasource": "${datasource}" } }
 			   |}}}""".stripMargin.replaceAll("\n", " ")
 		LOG.info(s"load Vertex Dataframe from '${datasource}'")
-		spark.read.format("es").options(conf.es)
+		spark.read.format("org.elasticsearch.spark.sql")		// == format("es")
+				.options(conf.es)
 				.option("es.query", query)
 				.schema(schema)
 				.load(index)
@@ -260,7 +261,8 @@ class Agens(spark: SparkSession, val conf: AgensConf) extends Serializable {
 			   |  "must": { "term": { "datasource": "${datasource}" } },
 			   |  "must": { "term": { "label": "${label}" } }
 			   |}}}""".stripMargin.replaceAll("\n", " ")
-		spark.read.format("es").options(conf.es)
+		spark.read.format("org.elasticsearch.spark.sql")		// == format("es")
+				.options(conf.es)
 				.option("es.query", query)
 				.schema(schema)
 				.load(index)

@@ -12,6 +12,7 @@ public final class AgensLivyHelper {
     // for add jar to livy-session
     public static String connectorJarPath = "hdfs://minmac:9000/user/agens/lib/agens-spark-connector-1.0-dev.jar";
     public static String livyjobsJarPath = "hdfs://minmac:9000/user/agens/lib/agens-livy-jobs-1.0-dev.jar";
+    public static String essparkJarPath = "hdfs://minmac:9000/user/agens/jars/elasticsearch-spark-20_2.11-7.7.1.jar";
 
     public static URI convertURI(String param){
         try{

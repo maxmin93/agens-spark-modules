@@ -69,7 +69,8 @@ public class RunAvroWriteJob {
 }
 
 /*
-java -cp target/agens-livy-jobs-1.0-dev.jar net.bitnine.agens.livy.RunAvroWriteJob http://minmac:8998 person
+java -cp target/agens-livy-test-1.0-dev.jar \
+net.bitnine.agens.livy.app.RunAvroWriteApp http://minmac:8998 person
 ==>
 Uploading livy-jobs jar to the SparkContext...
 

@@ -21,7 +21,7 @@ public class RunCypherJob {
         // parameter: agens.spark.livy
         URI livyUri = AgensLivyHelper.convertURI(livyUrl);
         if( livyUri == null )
-            throw new AgensLivyJobException("Wrong livy URI: "+livyUrl);
+            throw new AgensLivyJobException("[Error] Wrong livy URI: "+livyUrl);
 
         // connect to livy server with livyUri
         LivyClient client;
@@ -38,7 +38,7 @@ public class RunCypherJob {
             client.addJar(jar2Uri);     // agens-livy-jobs
         }
         catch (Exception ex){
-            throw new AgensLivyJobException("Fail: livyClient connect", ex.getCause());
+            throw new AgensLivyJobException("[Fail] livyClient connect: "+ex.getMessage(), ex.getCause());
         }
 
         // result = schema of saved avro data
@@ -47,7 +47,7 @@ public class RunCypherJob {
             // parameters(3): agens.query.datasource, agens.query.name, agens.query.query
             schemaJson = client.submit(new CypherJob(datasource, name, query)).get();
         } catch (Exception ex){
-            throw new AgensLivyJobException("Fail: livyClient.submit", ex.getCause());
+            throw new AgensLivyJobException("[Fail] livyClient.submit: "+ex.getMessage(), ex.getCause());
         } finally {
             client.stop(true);
         }
@@ -63,6 +63,7 @@ public class RunCypherJob {
         }
         System.out.println("");
 
+        System.out.println("RunCypherJob.. ");
         String result = run(AgensLivyHelper.connectorJarPath, args[0], args[1], args[2], args[3]);
         System.out.println("result ==>\n"+result);
     }

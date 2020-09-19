@@ -43,7 +43,18 @@ public class RunCypherApp {
 
 }
 /*
-java -cp target/agens-livy-test-1.0-dev.jar net.bitnine.agens.livy.app.RunCypherApp http://minmac:8998 modern test_query02 "match (a:person) return a.id_, a.name, a.age, a.country"
+## requirement!!
+## ==> 하나 이상의 jar 포함시, linux는 ':', windows는 ';'으로 구분
+
+[spark-defaults.conf]
+spark.driver.extraClassPath     /Users/bgmin/Servers/extraJars/elasticsearch-spark-20_2.11-7.7.1.jar
+spark.executor.extraClassPath   /Users/bgmin/Servers/extraJars/elasticsearch-spark-20_2.11-7.7.1.jar
+
+============================
+
+java -cp target/agens-livy-test-1.0-dev.jar \
+net.bitnine.agens.livy.app.RunCypherApp http://minmac:8998 modern \
+test_query02 "match (a:person) return a.id_, a.name, a.age, a.country"
 ==>
 
  */
