@@ -40,6 +40,11 @@
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-reflect</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
 
     <!-- Hadoop -->
     <dependency>
@@ -191,7 +196,7 @@
           <!-- TASK #1 -->
           <execution>
             <id>copy full-jar to remote</id>
-            <phase>pre-integration-test</phase>
+            <phase>package</phase>
             <configuration>
               <target>
                 <exec executable="scp">
@@ -220,9 +225,9 @@
             </configuration>
           </execution>
           <!-- TASK #3 -->
-          <!-- execution>
+          <execution>
             <id>upload full-jar to hdfs</id>
-            <phase>pre-integration-test</phase>
+            <phase>package</phase>
             <configuration>
               <target>
                 <exec executable="hdfs">
@@ -237,7 +242,7 @@
             <goals>
               <goal>run</goal>
             </goals>
-          </execution -->
+          </execution>
         </executions>
       </plugin>
     </plugins>

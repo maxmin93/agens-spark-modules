@@ -218,13 +218,28 @@ class Agens(spark: SparkSession, val conf: AgensConf) extends Serializable {
 		println(s"** Edges: $relWrites")
 	}
 
+	// **NOTE: 아래 쿼리가 DF로 save 되는 과정에서 오류 발생. 해결 필요!! (alias 해도 마찬가지)
+	//
+	// query: match (a:person)-[:knows]->(c:person) return a as a_person, c as c_person
+	// ==> org.apache.avro.SchemaParseException: Illegal character in: a_person:person
+	// ==> 컬럼에 대한 mapping 문제. node, edge 등 특수 경우에 대한 converter를 만들어야 할지도
+	//
+	//	at org.apache.avro.Schema.validateName(Schema.java:1151)
+	//	at org.apache.avro.Schema.access$200(Schema.java:81)
+	//	at org.apache.avro.Schema$Field.<init>(Schema.java:403)
+	//	at org.apache.avro.SchemaBuilder$FieldBuilder.completeField(SchemaBuilder.java:2124)
+	//	at org.apache.avro.SchemaBuilder$FieldBuilder.completeField(SchemaBuilder.java:2120)
+	//	at org.apache.avro.SchemaBuilder$FieldBuilder.access$5200(SchemaBuilder.java:2034)
+	//	at org.apache.avro.SchemaBuilder$GenericDefault.noDefault(SchemaBuilder.java:2417)
+	//	at org.apache.spark.sql.avro.SchemaConverters$$anonfun$5.apply(SchemaConverters.scala:177)
+	//	at org.apache.spark.sql.avro.SchemaConverters$$anonfun$5.apply(SchemaConverters.scala:174)
+
 	def saveResultAsAvro(result: CypherResult, saveName: String): String = {
 		val df = result.records.asDataFrame
-		val tempPath =  if( this.conf.tempPath.endsWith("/") ) this.conf.tempPath + saveName
-						else this.conf.tempPath + "/" + saveName
-		println("saveResultAsAvro: "+tempPath)
-		df.write.mode(SaveMode.Overwrite).format("avro").save(tempPath)
-		tempPath
+		val savePath = AgensHelper.savePath(this.conf.tempPath, saveName)
+		// DataFrameWriter.scala 230, 272 라인에서 오류
+		df.write.mode(SaveMode.Overwrite).format("avro").save(savePath)
+		savePath
 	}
 
 	///////////////////////////////////////

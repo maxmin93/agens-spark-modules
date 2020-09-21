@@ -2,7 +2,7 @@ package net.bitnine.agens.livy.job
 
 import net.bitnine.agens.livy.util.SchemaConverters
 import net.bitnine.agens.spark.Agens.ResultsAsDF
-import net.bitnine.agens.spark.{Agens, AgensBuilder}
+import net.bitnine.agens.spark.{Agens, AgensBuilder, AgensHelper}
 import org.apache.avro.SchemaBuilder
 import org.apache.livy.{Job, JobContext}
 import org.apache.spark.sql.SparkSession
@@ -40,14 +40,14 @@ class CypherJob(
 
 		// **NOTE: AgensConf must be set by spark-default.conf
 		println("1) Agens connect to ES")
-		val agens:Agens = AgensBuilder(spark)
-				.host("minmac")
-				.port("29200")
-				.user("elastic")
-				.password("bitnine")
-				.vertexIndex("agensvertex")
-				.edgeIndex("agensedge")
-				.build
+		val agens:Agens = AgensBuilder(spark).build
+//				.host("minmac")
+//				.port("29200")
+//				.user("elastic")
+//				.password("bitnine")
+//				.vertexIndex("agensvertex")
+//				.edgeIndex("agensedge")
+//				.build
 
 		//////////////////////////////////
 		// 2) spark-cypher : run query
@@ -61,12 +61,10 @@ class CypherJob(
 		val result = graph.cypher(query)
 		result.show
 
-
 		// save to '/user/agens/temp' as avro
 		println("\n** tempPath ==> "+ agens.conf.tempPath)
 		println("4) save results as avro: "+name)
 		agens.saveResultAsAvro(result, name)
-
 
 		//////////////////////////////////
 		// 3) convert schema of result to avro schema

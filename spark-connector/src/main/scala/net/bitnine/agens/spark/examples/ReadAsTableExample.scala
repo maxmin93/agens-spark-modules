@@ -1,5 +1,6 @@
 package net.bitnine.agens.spark.examples
 
+import net.bitnine.agens.spark.Agens.ResultsAsDF
 import net.bitnine.agens.spark.AgensBuilder
 import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
@@ -38,9 +39,18 @@ object ReadAsTableExample extends App {
 	result2.show
 
 	val result3 = graphModern.cypher("""|MATCH (a:person)-[r:knows]->(b)
-										|RETURN a.name$, b.name$, r.weight$
-										|ORDER BY a.name$""".stripMargin)
+										|RETURN a.name, b.name, r.weight
+										|ORDER BY a.name""".stripMargin)
 	result3.show
+
+	// Spark SQL: temp Table => managed Table
+	val df3 = result3.asDataFrame
+	val tblName = "modern_temp3"
+	// deprecated: registerTempTable
+	df3.createOrReplaceTempView(tblName)
+	// create managed table using avro
+	spark.sql(s"create table avro_${tblName} stored as avro as select * from ${tblName}")
+	spark.sql(s"select * from avro_${tblName}").show
 
 	val result4 = graphModern.cypher("MATCH (a)-[r:knows]->(b) RETURN a, b")
 	result4.show

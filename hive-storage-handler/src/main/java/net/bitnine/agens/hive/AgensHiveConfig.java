@@ -3,10 +3,12 @@ package net.bitnine.agens.hive;
 // **참고 : hive-jdbc-storage-handler
 public enum AgensHiveConfig {
 
-    LIVY_URL("livy", true),
     DATASOURCE("datasource", true),
-    NAME("name", true),
     QUERY("query", true),
+
+    LIVY_URL("livy", false),
+    TEMP_PATH("temp", false),
+
     VERTEX_INDEX("vertex", false),
     EDGE_INDEX("edge", false),
     FETCH_SIZE("fetch.size", false),

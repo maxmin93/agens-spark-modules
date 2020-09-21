@@ -17,7 +17,7 @@ object MultiGraphExample extends App {
 
 	//////////////////////////////////
 
-	val agens = AgensBuilder.default()
+	val agens = AgensBuilder(spark).build	//	.default(spark)
 	val datasource = "modern"
 
 	val graphModern = agens.graph(datasource)

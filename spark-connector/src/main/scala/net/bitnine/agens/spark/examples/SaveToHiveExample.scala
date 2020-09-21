@@ -19,14 +19,14 @@ object SaveToHiveExample extends App {
 	//////////////////////////////////
 
 	// create agens session
-	val agens = AgensBuilder(spark)
-			.host("minmac")
-			.port("29200")
-			.user("elastic")
-			.password("bitnine")
-			.vertexIndex("agensvertex")
-			.edgeIndex("agensedge")
-			.build
+	val agens = AgensBuilder(spark).build
+//			.host("minmac")
+//			.port("29200")
+//			.user("elastic")
+//			.password("bitnine")
+//			.vertexIndex("agensvertex")
+//			.edgeIndex("agensedge")
+//			.build
 
 	// set datasource value
 	val datasource = "modern"

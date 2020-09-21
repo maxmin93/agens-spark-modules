@@ -28,7 +28,8 @@ public class RunPiJob {
             client = new LivyClientBuilder()
                     .setURI(livyUri)
                     .setConf(SparkLauncher.EXECUTOR_MEMORY, "1G")
-                    .setConf("livy.rsc.server.connect.timeout","10s")
+                    .setConf("livy.rsc.server.connect.timeout","360s")
+                    .setConf("livy.rsc.client.connect.timeout","120s")
                     .build();
         }
         catch (Exception ex){

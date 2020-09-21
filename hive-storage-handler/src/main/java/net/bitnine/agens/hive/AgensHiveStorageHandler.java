@@ -28,7 +28,7 @@ public class AgensHiveStorageHandler extends DefaultStorageHandler {
 
     public static void main( String[] args )
     {
-        System.out.println( "net.bitnine.agens.hive" );
+        System.out.println( "net.bitnine.agens.hive.AgensHiveStorageHandler" );
     }
 
     private Configuration conf;
@@ -58,48 +58,42 @@ public class AgensHiveStorageHandler extends DefaultStorageHandler {
     @Override
     public void configureTableJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
         LOG.info("Configuring MapReduce Job Table configuration.. ");
-        ImmutableMap<String, String> tableConfKeys = ImmutableMap.of();
-
-        Properties properties = tableDesc.getProperties();
         System.out.println("1) TableJobProperties ==>");
-        System.out.println(properties);
-
-        AgensStorageConfigManager.copyConfigurationToJob(properties, jobProperties);
-    }
-
-    // called when SQL 'select'
-    @Override
-    public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-        LOG.info("Configuring MapReduce Job Input Properties.. ");
-        ImmutableMap<String, String> inputConfKeys = ImmutableMap.of();
-
-        Properties properties = tableDesc.getProperties();
-        System.out.println("2) InputJobProperties ==>");
-        System.out.println(properties);
-
-        AgensStorageConfigManager.copyConfigurationToJob(properties, jobProperties);
-    }
-
-    @Override
-    public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-        LOG.info("Configuring MapReduce Job Output Properties.. ");
-        ImmutableMap<String, String> outputConfKeys = ImmutableMap.of();
-
-        Properties properties = tableDesc.getProperties();
-        System.out.println("3) OutputJobProperties ==>");
-        System.out.println(properties);
+//        Properties properties = tableDesc.getProperties();
+//        System.out.println(properties);
 
         // do nothing by default
     }
 
+    // called when 'SELECT'
+    @Override
+    public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+        LOG.info("Configuring MapReduce Job Input Properties.. ");
+        System.out.println("2) InputJobProperties ==>");
+//        Properties properties = tableDesc.getProperties();
+//        System.out.println(properties);
+
+        // do nothing by default
+    }
+
+    // called when "INSERT INTO 1)"
+    @Override
+    public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+        LOG.info("Configuring MapReduce Job Output Properties.. ");
+        System.out.println("3) OutputJobProperties ==>");
+//        Properties properties = tableDesc.getProperties();
+//        System.out.println(properties);
+
+        // do nothing by default
+    }
+
+    // called when "INSERT INTO 2)"
     @Override
     public void configureJobConf(TableDesc tableDesc, JobConf jobConf) {
         LOG.info("Configuring MapReduce Job configuration.. ");
-        ImmutableMap<String, String> jobConfKeys = ImmutableMap.of();
-
-        Properties properties = tableDesc.getProperties();
         System.out.println("4) JobConf ==>");
-        System.out.println(properties);
+//        Properties properties = tableDesc.getProperties();
+//        System.out.println(properties);
 
         //do nothing by default
     }
@@ -122,28 +116,39 @@ public class AgensHiveStorageHandler extends DefaultStorageHandler {
 }
 
 /*
+1) open hive or beeline
+2) add jar (verify => list jars)
 add jar hdfs://minmac:9000/user/agens/lib/agens-hive-storage-handler-1.0-dev.jar;
-
-list jars;
 
 ** NOTE: 사용자 변수는 --hiveconf 보다 --hivevar 사용을 권장
 select ${hiveconf:hive.server2.thrift.port};
 ==> 9999
 
-CREATE external TABLE agens_test2 (id STRING)
+** NOTE: a, b 등의 태그를 그대로 출력하면 오류!! alias 이용해도 오류!!
+[Fail] livyClient.submit:
+java.lang.RuntimeException: org.apache.avro.SchemaParseException: Illegal character in: a:person
+java.lang.RuntimeException: org.apache.avro.SchemaParseException: Illegal character in: a_person:person
+
+CREATE external TABLE modern_test2
 STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
 TBLPROPERTIES(
-'agens.graph.livy'='http://minmac:8998',
-'agens.graph.datasource'='modern',
-'agens.graph.name'='cypher_test',
-'agens.graph.query'='match (a)-[:KNOWS]-(b) return a, b'
+'avro.schema.url'='hdfs://minmac:9000/user/agens/default.avsc',
+'agens.spark.datasource'='modern',
+'agens.spark.query'='match (a:person)-[:knows]->(c:person) return a as a_person, c as c_person'
+);
+
+CREATE external TABLE modern_test3
+STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
+TBLPROPERTIES(
+'avro.schema.url'='hdfs://minmac:9000/user/agens/default.avsc',
+'agens.spark.datasource'='modern',
+'agens.spark.query'='match (a:person)-[b]-(c:person) return distinct a.id_, a.name, a.age, a.country, b.label, c.name'
 );
 
 insert into agens_test1 values('aaa','bbb');
 ==>
-Diagnostic Messages for this Task:
-Error: java.lang.RuntimeException: org.apache.hadoop.hive.ql.metadata.HiveException: Hive Runtime Error while processing row {"tmp_values_col1":"aaa","tmp_values_col2":"bbb"}
-Caused by: org.apache.hadoop.hive.ql.metadata.HiveException: org.apache.hadoop.hive.ql.metadata.HiveException: org.apache.hadoop.fs.FileAlreadyExistsException: /user/hive/warehouse/agens_test1 already exists as a directory
+Caused by: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.fs.FileAlreadyExistsException):
+/user/agens/temp/modern_knows.avro already exists as a directory
 
 drop table agens_test1;
  */

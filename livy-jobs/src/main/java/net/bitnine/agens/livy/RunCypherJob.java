@@ -28,7 +28,9 @@ public class RunCypherJob {
             client = new LivyClientBuilder()
                     .setURI(livyUri)
                     // .setConf(SparkLauncher.EXECUTOR_MEMORY, "1G")
-                    .setConf("livy.rsc.server.connect.timeout","10s")
+                    // **NOTE: 간혹 Http ConnectionTimeout 발생하는 경우가 있다
+                    .setConf("livy.rsc.server.connect.timeout","360s")
+                    .setConf("livy.rsc.client.connect.timeout","120s")
                     .build();
         }
         catch (Exception ex){

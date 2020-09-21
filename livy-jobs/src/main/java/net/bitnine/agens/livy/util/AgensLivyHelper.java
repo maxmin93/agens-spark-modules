@@ -30,4 +30,8 @@ public final class AgensLivyHelper {
         }
     }
 
+    // **NOTE: same function of AgensHelper.savePath
+    public static String savePath(String tempPath, String name){
+        return String.format("%s/%s.avro", tempPath, name);
+    }
 }

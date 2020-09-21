@@ -148,5 +148,7 @@ object AgensHelper {
 		CAPSRelationshipTable(label, df)
 	}
 
-
+	def savePath(tempPath: String, name: String): String = {
+		s"$tempPath/$name.avro"
+	}
 }
