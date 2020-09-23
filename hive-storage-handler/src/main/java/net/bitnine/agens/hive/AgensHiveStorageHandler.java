@@ -145,6 +145,14 @@ TBLPROPERTIES(
 'agens.spark.query'='match (a:person)-[b]-(c:person) return distinct a.id_, a.name, a.age, a.country, b.label, c.name'
 );
 
+CREATE external TABLE modern_test1
+STORED BY 'net.bitnine.agens.hive.AgensHiveStorageHandler'
+TBLPROPERTIES(
+'avro.schema.url'='hdfs://minmac:9000/user/agens/default.avsc',
+'agens.spark.datasource'='modern',
+'agens.spark.query'='match (a:person)-[b]-(c:person) return distinct a.id_, a.name, a.age, a.country, b.label, c.name'
+);
+
 insert into agens_test1 values('aaa','bbb');
 ==>
 Caused by: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.fs.FileAlreadyExistsException):

@@ -2,8 +2,8 @@ package net.bitnine.agens.spark.examples
 
 import net.bitnine.agens.spark.Agens.ResultsAsDF
 import net.bitnine.agens.spark.AgensBuilder
-import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
+import org.apache.log4j.Logger
 
 object ReadAsTableExample extends App {
 

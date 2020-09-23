@@ -1,12 +1,8 @@
 package net.bitnine.agens.spark.examples
 
-import net.bitnine.agens.cypher.api.io.util.CAPSGraphExport.CanonicalTableExport
-import net.bitnine.agens.cypher.api.io.util.HiveTableName
-import net.bitnine.agens.cypher.impl.CAPSConverters.RichPropertyGraph
 import net.bitnine.agens.spark.AgensBuilder
 import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
-import org.opencypher.okapi.api.graph.{GraphName, Node, Relationship}
 
 object SaveToHiveExample extends App {
 
