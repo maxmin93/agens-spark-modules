@@ -1,14 +1,21 @@
-# Agens Spark Connector 
+# Agens Spark Modules 
 
-Agens Connector for Apache Spark based on ES-Hadoop
+- Agens Spark Cypher
+- Agens Spark Connector
+- Agens Livy Jobs
+- Agens Hive Storage Handler
 
 ## build
 
 ```shell script
-mvn clean package -DskipTests
+mvn clean install
 ```
 
 ## run
+
+- run batch by Spark Submit
+- run interactive by Spark Shell with Zeppelin
+- create table through hive-storage-handler, livy 
 
 ```shell script
 ## for TEST
